@@ -80,7 +80,7 @@ impl<'a> System<'a> for AttackSystem {
                                 continue;
                             }
 
-                            if let Some(mut aff_health) = healths.get_mut(*ent_hit) {
+                            if let Some(aff_health) = healths.get_mut(*ent_hit) {
                                 aff_health.current -= amount;
 
                                 if let Some(aff_part) = multis.get_mut(*ent_hit) {

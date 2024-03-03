@@ -1,6 +1,6 @@
 use super::consts::*;
 use crate::*;
-use rltk::{Algorithm2D, Rltk, RGB};
+use rltk::{Algorithm2D};
 
 // TODO
 pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {

@@ -1,6 +1,6 @@
 use crate::weapon::WeaponButton;
 use crate::*;
-use rltk::{Point, Rltk, VirtualKeyCode};
+use rltk::{Point, VirtualKeyCode};
 
 pub const DODGE_STAM_REQ: i32 = 3;
 pub const CHARGE_STAM_REQ: i32 = 2;
@@ -64,20 +64,20 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                         }
                     }
                 } else {
-                    // let attack = crate::attack_type::get_attack_intent(
-                    //     AttackType::Punch,
-                    //     Point::new(new_x, new_y),
-                    //     None,
-                    // );
+                    // bump attack
+                    let attack = crate::attack_type::get_attack_intent(
+                        AttackType::Punch,
+                        Point::new(new_x, new_y),
+                        None,
+                    );
 
-                    // attacks
-                    //     .insert(*player, attack)
-                    //     .expect("Failed to insert new attack from player");
+                    attacks
+                        .insert(*player, attack)
+                        .expect("Failed to insert new attack from player");
 
-                    // return RunState::Running;
-
+                    return RunState::Running;
                     // Keep bump attacks?
-                    return RunState::AwaitingInput;
+                    // return RunState::AwaitingInput;
                 }
             }
 
@@ -278,7 +278,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) ->
             // end charging if we run out of stamina
             let mut stams = gs.ecs.write_storage::<Stamina>();
             let player = gs.ecs.fetch::<Entity>();
-            let mut stamina = stams.get_mut(*player).unwrap();
+            let stamina = stams.get_mut(*player).unwrap();
 
             if stamina.current < CHARGE_STAM_REQ {
                 gs.player_charging.0 = false;

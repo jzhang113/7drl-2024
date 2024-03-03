@@ -1,7 +1,6 @@
 use super::consts::*;
 use crate::weapon::WeaponButton;
 use crate::*;
-use rltk::{Rltk, RGB};
 
 pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
     let players = gs.ecs.read_storage::<Player>();

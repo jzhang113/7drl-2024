@@ -268,7 +268,7 @@ impl State {
             // update player position
             let player = self.ecs.fetch::<Entity>();
             let mut positions = self.ecs.write_storage::<Position>();
-            let mut player_pos = positions
+            let player_pos = positions
                 .get_mut(*player)
                 .expect("player didn't have a position");
 
@@ -295,7 +295,7 @@ impl State {
     fn reset_player(&mut self) {
         let player = self.ecs.fetch::<Entity>();
         let mut healths = self.ecs.write_storage::<Health>();
-        let mut player_healths = healths
+        let player_healths = healths
             .get_mut(*player)
             .expect("player didn't have a health");
 
@@ -316,7 +316,7 @@ impl State {
             self.player_inventory.money += quest.reward;
 
             let log_quest = self.quests.entries.iter_mut().find(|q| q == &quest);
-            if let Some(mut log_quest) = log_quest {
+            if let Some(log_quest) = log_quest {
                 log_quest.completed = true;
             }
         }

@@ -65,7 +65,7 @@ pub fn build_rogue_map(
 }
 
 pub fn build_level(ecs: &mut specs::World, width: i32, height: i32, depth: i32) -> Map {
-    let mut map = {
+    let map = {
         let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
         build_rogue_map(width, height, depth, &mut rng)
     };

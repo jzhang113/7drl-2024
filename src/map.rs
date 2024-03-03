@@ -1,7 +1,6 @@
 use rltk::{Algorithm2D, BaseMap, Point, Rect};
 use specs::Entity;
 use std::collections::HashMap;
-use std::convert::TryInto;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {

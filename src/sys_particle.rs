@@ -15,7 +15,7 @@ fn update_lifetimes(ecs: &mut World, ctx: &Rltk) -> Vec<Entity> {
     let mut particles = ecs.write_storage::<ParticleLifetime>();
     let entities = ecs.entities();
 
-    for (ent, mut lifetime) in (&entities, &mut particles).join() {
+    for (ent, lifetime) in (&entities, &mut particles).join() {
         lifetime.remaining -= ctx.frame_time_ms;
         if lifetime.remaining < 0.0 {
             dead_particles.push(ent);

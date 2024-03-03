@@ -1,6 +1,6 @@
 use super::consts::*;
 use crate::*;
-use rltk::{Algorithm2D, Rltk, RGB};
+use rltk::{Algorithm2D};
 
 pub fn draw_all(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
     // map elements

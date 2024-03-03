@@ -16,11 +16,11 @@ impl<'a> System<'a> for PickupSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, player, mut map, mut run_state, positions, scheds, heals, mut healths) =
+        let (entities, player, mut map, run_state, positions, scheds, heals, mut healths) =
             data;
         let mut consumed = Vec::new();
 
-        for (ent, pos, mut health, _) in (&entities, &positions, &mut healths, &scheds).join() {
+        for (ent, pos, health, _) in (&entities, &positions, &mut healths, &scheds).join() {
             let point = rltk::Point::new(pos.x, pos.y);
 
             match map.untrack_item(point) {
