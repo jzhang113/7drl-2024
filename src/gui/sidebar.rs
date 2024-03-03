@@ -51,6 +51,8 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         ctx.print(x, y + 2, "Charging!");
     }
 
+    ctx.print(x, y + 3, gs.tick);
+
     // Quest info
     y += 4;
     ctx.print(x, y, "Quest:");
@@ -199,8 +201,8 @@ fn add_weapon_text(
 
     let mut y = y;
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Light) {
-        let sheathe_icon_color = if name != "Draw Atk" {
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Light) {
+        let sheathe_icon_color = if data.name != "Draw Atk" {
             icon_color
         } else {
             inactive_color
@@ -209,44 +211,38 @@ fn add_weapon_text(
         ctx.print_color(x, y, sheathe_icon_color, bg_color, "s");
         ctx.print(x + 2, y, "Sheathe");
 
-        if let Some(stam_cost) = weapon.can_activate_cost(WeaponButton::Light) {
-            let attack_icon_color = if stam_cost <= player_stam {
-                icon_color
-            } else {
-                inactive_color
-            };
+        let attack_icon_color = if data.stam_cost <= player_stam {
+            icon_color
+        } else {
+            inactive_color
+        };
 
-            y += 2;
-            ctx.print_color(x, y, attack_icon_color, bg_color, "z");
-            ctx.print(x + 2, y, &name);
-        }
+        y += 2;
+        ctx.print_color(x, y, attack_icon_color, bg_color, "z");
+        ctx.print(x + 2, y, &data.name);
     }
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Heavy) {
-        if let Some(stam_cost) = weapon.can_activate_cost(WeaponButton::Heavy) {
-            let attack_icon_color = if stam_cost <= player_stam {
-                icon_color
-            } else {
-                inactive_color
-            };
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Heavy) {
+        let attack_icon_color = if data.stam_cost <= player_stam {
+            icon_color
+        } else {
+            inactive_color
+        };
 
-            y += 2;
-            ctx.print_color(x, y, attack_icon_color, bg_color, "x");
-            ctx.print(x + 2, y, &name);
-        }
+        y += 2;
+        ctx.print_color(x, y, attack_icon_color, bg_color, "x");
+        ctx.print(x + 2, y, &data.name);
     }
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Special) {
-        if let Some(stam_cost) = weapon.can_activate_cost(WeaponButton::Special) {
-            let attack_icon_color = if stam_cost <= player_stam {
-                icon_color
-            } else {
-                inactive_color
-            };
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Special) {
+        let attack_icon_color = if data.stam_cost <= player_stam {
+            icon_color
+        } else {
+            inactive_color
+        };
 
-            y += 2;
-            ctx.print_color(x, y, attack_icon_color, bg_color, "c");
-            ctx.print(x + 2, y, &name);
-        }
+        y += 2;
+        ctx.print_color(x, y, attack_icon_color, bg_color, "c");
+        ctx.print(x + 2, y, &data.name);
     }
 }

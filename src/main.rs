@@ -56,6 +56,7 @@ use gamelog::GameLog;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TargettingValid {
+    All,
     Unblocked,
     Occupied,
     None,
@@ -353,8 +354,8 @@ impl GameState for State {
             &self
                 .player_inventory
                 .weapon
-                .attack_name(weapon::WeaponButton::Light)
-                .map_or(false, |name| name == "Draw Atk")
+                .get_attack_data(weapon::WeaponButton::Light)
+                .map_or(false, |data| data.name == "Draw Atk")
         };
 
         // draw map + gui
@@ -428,17 +429,9 @@ impl GameState for State {
                 next_status = player::view_input(self, ctx, index);
             }
             RunState::Running => {
-                // uncomment while loop to skip rendering intermediate states
-                while next_status == RunState::Running {
-                    next_status = self.run_systems();
-
-                    if next_status != RunState::Running {
-                        break;
-                    }
-
-                    // std::thread::sleep(std::time::Duration::from_millis(100));
-                    next_status = *self.ecs.fetch::<RunState>();
-                }
+                self.run_systems();
+                std::thread::sleep(std::time::Duration::from_millis(10));
+                next_status = *self.ecs.fetch::<RunState>();
             }
             RunState::HitPause { remaining_time } => {
                 sys_particle::ParticleSpawnSystem.run_now(&self.ecs);

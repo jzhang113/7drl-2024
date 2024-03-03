@@ -1,9 +1,19 @@
 pub mod lance;
 
+use crate::AttackType;
+
+#[derive(Copy, Clone)]
 pub enum WeaponButton {
     Light,
     Heavy,
     Special,
+}
+
+pub struct AttackData {
+    pub needs_target: bool,
+    pub name: String,
+    pub stam_cost: i32,
+    pub attack_type: AttackType,
 }
 
 pub trait Weapon {
@@ -12,22 +22,12 @@ pub trait Weapon {
     fn sheathe(&mut self) -> bool;
     fn reset(&mut self);
 
-    fn light_attack(
+    fn invoke_attack(
         &mut self,
-        from: rltk::Point,
-        dir: crate::Direction,
-    ) -> Option<crate::AttackIntent>;
-    fn heavy_attack(
-        &mut self,
-        from: rltk::Point,
-        dir: crate::Direction,
-    ) -> Option<crate::AttackIntent>;
-    fn special_attack(
-        &mut self,
+        button: WeaponButton,
         from: rltk::Point,
         dir: crate::Direction,
     ) -> Option<crate::AttackIntent>;
 
-    fn can_activate_cost(&self, button: WeaponButton) -> Option<i32>;
-    fn attack_name(&self, button: WeaponButton) -> Option<String>;
+    fn get_attack_data(&self, button: WeaponButton) -> Option<AttackData>;
 }

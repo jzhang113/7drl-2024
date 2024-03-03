@@ -134,28 +134,28 @@ pub fn add_weapon_text(ctx: &mut Rltk, weapon: &Box<dyn crate::weapon::Weapon>) 
     let attack_section_x = 29;
     let mut x = attack_section_x;
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Light) {
-        if name != "Draw Atk" {
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Light) {
+        if data.name != "Draw Atk" {
             ctx.print_color(x, y, icon_color, bg_color, "s");
             ctx.print(x + 1, y, "heathe");
             x += 10;
         }
 
         ctx.print_color(x, y, icon_color, bg_color, "z");
-        ctx.print(x + 2, y, &name);
-        x += name.len() + 5;
+        ctx.print(x + 2, y, &data.name);
+        x += data.name.len() + 5;
     }
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Heavy) {
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Heavy) {
         ctx.print_color(x, y, icon_color, bg_color, "x");
-        ctx.print(x + 2, y, &name);
-        x += name.len() + 5;
+        ctx.print(x + 2, y, &data.name);
+        x += data.name.len() + 5;
     }
 
-    if let Some(name) = weapon.attack_name(WeaponButton::Special) {
+    if let Some(data) = weapon.get_attack_data(WeaponButton::Special) {
         ctx.print_color(x, y, icon_color, bg_color, "c");
-        ctx.print(x + 2, y, &name);
-        x += name.len() + 5;
+        ctx.print(x + 2, y, &data.name);
+        x += data.name.len() + 5;
     }
 
     ctx.set_active_console(1);

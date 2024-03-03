@@ -1,4 +1,4 @@
-use super::{Weapon, WeaponButton};
+use super::{AttackData, Weapon, WeaponButton};
 use crate::{AttackIntent, AttackType};
 
 pub struct Lance {
@@ -24,8 +24,13 @@ enum LanceAttack {
     Sweep,
 }
 
-fn get_attack_name(attack: LanceAttack) -> String {
-    match attack {
+fn get_attack_data(attack: LanceAttack) -> AttackData {
+    let needs_target = match attack {
+        LanceAttack::Sweep => true,
+        _ => false,
+    };
+
+    let name = match attack {
         LanceAttack::DrawAttack => "Draw Atk",
         LanceAttack::Thrust { level } => match level {
             1 => "Stab I",
@@ -37,11 +42,9 @@ fn get_attack_name(attack: LanceAttack) -> String {
         LanceAttack::Charge => "Charge",
         LanceAttack::Sweep => "Sweep",
     }
-    .to_string()
-}
+    .to_string();
 
-fn get_attack_stamina_req(attack: LanceAttack) -> i32 {
-    match attack {
+    let stam_cost = match attack {
         LanceAttack::DrawAttack => 1,
         LanceAttack::Thrust { level } => match level {
             1 => 2,
@@ -52,6 +55,20 @@ fn get_attack_stamina_req(attack: LanceAttack) -> i32 {
         },
         LanceAttack::Charge => 2,
         LanceAttack::Sweep => 3,
+    };
+
+    let attack_type = match attack {
+        LanceAttack::Sweep => AttackType::Ranged,
+        LanceAttack::DrawAttack => AttackType::LanceDraw,
+        LanceAttack::Thrust { level } => AttackType::Punch,
+        LanceAttack::Charge => AttackType::Punch,
+    };
+
+    AttackData {
+        needs_target,
+        name,
+        stam_cost,
+        attack_type,
     }
 }
 
@@ -85,7 +102,7 @@ fn get_attack_intent(
             delay: 0,
         },
         LanceAttack::Sweep => AttackIntent {
-            main: AttackType::LanceSweep,
+            main: AttackType::Ranged,
             modifier: None,
             loc: from_point,
             delay: 1,
@@ -185,7 +202,7 @@ impl Weapon for Lance {
         }
 
         self.state = LanceState::Sheathed;
-        return true;
+        true
     }
 
     fn reset(&mut self) {
@@ -194,8 +211,13 @@ impl Weapon for Lance {
         }
     }
 
-    fn light_attack(&mut self, from: rltk::Point, dir: crate::Direction) -> Option<AttackIntent> {
-        if let Some((attack, next_state)) = self.next_state(WeaponButton::Light) {
+    fn invoke_attack(
+        &mut self,
+        button: WeaponButton,
+        from: rltk::Point,
+        dir: crate::Direction,
+    ) -> Option<AttackIntent> {
+        if let Some((attack, next_state)) = self.next_state(button) {
             self.state = next_state;
             Some(get_attack_intent(attack, from, dir))
         } else {
@@ -203,31 +225,8 @@ impl Weapon for Lance {
         }
     }
 
-    fn heavy_attack(&mut self, from: rltk::Point, dir: crate::Direction) -> Option<AttackIntent> {
-        if let Some((attack, next_state)) = self.next_state(WeaponButton::Heavy) {
-            self.state = next_state;
-            Some(get_attack_intent(attack, from, dir))
-        } else {
-            None
-        }
-    }
-
-    fn special_attack(&mut self, from: rltk::Point, dir: crate::Direction) -> Option<AttackIntent> {
-        if let Some((attack, next_state)) = self.next_state(WeaponButton::Special) {
-            self.state = next_state;
-            Some(get_attack_intent(attack, from, dir))
-        } else {
-            None
-        }
-    }
-
-    fn can_activate_cost(&self, button: WeaponButton) -> Option<i32> {
+    fn get_attack_data(&self, button: WeaponButton) -> Option<AttackData> {
         self.next_state(button)
-            .map(|(attack, _)| get_attack_stamina_req(attack))
-    }
-
-    fn attack_name(&self, button: WeaponButton) -> Option<String> {
-        self.next_state(button)
-            .map(|(attack, _)| get_attack_name(attack))
+            .map(|(attack, _)| get_attack_data(attack))
     }
 }

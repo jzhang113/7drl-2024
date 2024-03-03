@@ -116,93 +116,36 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
 
     let pos = positions.get(*player).unwrap();
     let facing = facings.get(*player).unwrap();
-    let mut stamina = stams.get_mut(*player).unwrap();
+    let stamina = stams.get_mut(*player).unwrap();
 
-    match button {
-        WeaponButton::Light => {
-            if let Some(stam_req) = gs
-                .player_inventory
-                .weapon
-                .can_activate_cost(WeaponButton::Light)
-            {
-                if stam_req > stamina.current {
-                    return RunState::AwaitingInput;
-                }
-
-                stamina.current -= stam_req;
-                stamina.recover = false;
-
-                if let Some(attack) = gs
-                    .player_inventory
-                    .weapon
-                    .light_attack(pos.as_point(), facing.direction)
-                {
-                    attacks
-                        .insert(*player, attack)
-                        .expect("Failed to insert new attack from player");
-                }
-
-                return RunState::Running;
-            } else {
-                return RunState::AwaitingInput;
-            }
+    if let Some(data) = gs.player_inventory.weapon.get_attack_data(button) {
+        if data.stam_cost > stamina.current {
+            return RunState::AwaitingInput;
         }
-        WeaponButton::Heavy => {
-            if let Some(stam_req) = gs
-                .player_inventory
-                .weapon
-                .can_activate_cost(WeaponButton::Heavy)
-            {
-                if stam_req > stamina.current {
-                    return RunState::AwaitingInput;
-                }
 
-                stamina.current -= stam_req;
-                stamina.recover = false;
-
-                if let Some(attack) = gs
-                    .player_inventory
-                    .weapon
-                    .heavy_attack(pos.as_point(), facing.direction)
-                {
-                    attacks
-                        .insert(*player, attack)
-                        .expect("Failed to insert new attack from player");
-                }
-
-                return RunState::Running;
-            } else {
-                return RunState::AwaitingInput;
-            }
+        if data.needs_target {
+            return RunState::Targetting {
+                attack_type: data.attack_type,
+                cursor_point: pos.as_point(),
+                validity_mode: TargettingValid::All,
+            };
         }
-        WeaponButton::Special => {
-            if let Some(stam_req) = gs
-                .player_inventory
+
+        stamina.current -= data.stam_cost;
+        stamina.recover = false;
+
+        if let Some(attack) =
+            gs.player_inventory
                 .weapon
-                .can_activate_cost(WeaponButton::Special)
-            {
-                if stam_req > stamina.current {
-                    return RunState::AwaitingInput;
-                }
-
-                stamina.current -= stam_req;
-                stamina.recover = false;
-
-                if let Some(attack) = gs
-                    .player_inventory
-                    .weapon
-                    .special_attack(pos.as_point(), facing.direction)
-                {
-                    attacks
-                        .insert(*player, attack)
-                        .expect("Failed to insert new attack from player");
-                }
-
-                return RunState::Running;
-            } else {
-                return RunState::AwaitingInput;
-            }
+                .invoke_attack(button, pos.as_point(), facing.direction)
+        {
+            attacks
+                .insert(*player, attack)
+                .expect("Failed to insert new attack from player");
         }
+        return RunState::Running;
+    } else {
+        return RunState::AwaitingInput;
     }
 }
 
@@ -243,10 +186,11 @@ fn handle_charging(gs: &mut State) -> bool {
 
         // If the obstacle happens to be a creature, also put in an attack
         if let Some(_dest_ent) = map.creature_map.get(&dest_index) {
-            let attack = gs
-                .player_inventory
-                .weapon
-                .light_attack(curr_point, gs.player_charging.1);
+            let attack = gs.player_inventory.weapon.invoke_attack(
+                WeaponButton::Light,
+                curr_point,
+                gs.player_charging.1,
+            );
 
             if let Some(attack) = attack {
                 attacks
@@ -389,10 +333,10 @@ fn handle_dodge(ecs: &mut World) -> Option<MoveIntent> {
         return None;
     }
 
-    return Some(MoveIntent {
+    Some(MoveIntent {
         loc: rltk::Point::new(player_x, player_y),
         force_facing: Some(player_facing),
-    });
+    })
 }
 
 pub fn can_dodge(gs: &State) -> bool {
@@ -405,7 +349,7 @@ pub fn can_dodge(gs: &State) -> bool {
 fn reduce_stam_for_dodge(ecs: &mut World) {
     let mut stams = ecs.write_storage::<Stamina>();
     let player = ecs.fetch::<Entity>();
-    let mut stamina = stams.get_mut(*player).unwrap();
+    let stamina = stams.get_mut(*player).unwrap();
     stamina.current -= DODGE_STAM_REQ;
     stamina.recover = false;
 }
@@ -474,32 +418,26 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunS
             }
             VirtualKeyCode::Period => {
                 gs.player_inventory.weapon.reset();
-                return RunState::Running;
+                RunState::Running
             }
             // VirtualKeyCode::D => {
             //     // TODO: For testing, remove
             //     return RunState::Dead { success: true };
             // }
             // VirtualKeyCode::V => RunState::ViewEnemy { index: 0 },
-            VirtualKeyCode::Z => {
-                return weapon_attack(gs, WeaponButton::Light);
-            }
-            VirtualKeyCode::X => {
-                return weapon_attack(gs, WeaponButton::Heavy);
-            }
-            VirtualKeyCode::C => {
-                return weapon_attack(gs, WeaponButton::Special);
-            }
+            VirtualKeyCode::Z => weapon_attack(gs, WeaponButton::Light),
+            VirtualKeyCode::X => weapon_attack(gs, WeaponButton::Heavy),
+            VirtualKeyCode::C => weapon_attack(gs, WeaponButton::Special),
             VirtualKeyCode::S => {
                 if gs.player_inventory.weapon.sheathe() {
-                    return RunState::Running;
+                    RunState::Running
                 } else {
-                    return RunState::AwaitingInput;
+                    RunState::AwaitingInput
                 }
             }
             VirtualKeyCode::Space => {
                 if !can_dodge(gs) {
-                    return RunState::AwaitingInput;
+                    RunState::AwaitingInput
                 } else if is_weapon_sheathed {
                     let p = {
                         let player = gs.ecs.fetch::<Entity>();
@@ -524,9 +462,9 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunS
                     reduce_stam_for_dodge(&mut gs.ecs);
                     gs.player_inventory.weapon.reset();
 
-                    return RunState::Running;
+                    RunState::Running
                 } else {
-                    return RunState::AwaitingInput;
+                    RunState::AwaitingInput
                 }
             }
             _ => RunState::AwaitingInput,
@@ -598,6 +536,7 @@ pub fn ranged_target(
                     let idx = map.get_index(point.x, point.y);
                     !map.blocked_tiles[idx]
                 })
+                .copied()
                 .collect(),
             TargettingValid::Occupied => available_cells
                 .iter()
@@ -605,8 +544,10 @@ pub fn ranged_target(
                     let idx = map.get_index(point.x, point.y);
                     map.creature_map.get(&idx).is_some()
                 })
+                .copied()
                 .collect(),
             TargettingValid::None => Vec::new(),
+            TargettingValid::All => available_cells,
         };
 
         // Draw cursor
