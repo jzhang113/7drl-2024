@@ -1,0 +1,65 @@
+prefixes:
+  - name: "Shattered"
+  - name: "Ancient"
+  - name: "Ancestral"
+  - name: "Misty"
+  - name: "Coral"
+    color: "#FF7F50"
+  - name: "Rotten"
+  - name: "Flooded"
+  - name: "Frost"
+    color: "#8bafc7"
+  - name: "Frozen"
+  - name: "Sandy"
+    color: "#C2B280"
+  - name: "Lava"
+    color_hex: "#cf1020"
+  - name: "Primal"
+  - name: "Windswept"
+  - name: "Grand"
+  - name: "Storm"
+  - name: "Fabled"
+  - name: "Ruined"
+    map_type: 2
+  - name: "Twisting"
+    map_type: 3
+  - name: "Winding"
+    map_type: 3
+  - name: "Overgrown"
+    map_type: 3
+areas:
+  - name: "Forest"
+    color: "#228B22"
+  - name: "Island"
+  - name: "Peaks"
+  - name: "Tower"
+  - name: "Hollow"
+  - name: "End"
+  - name: "Ridge"
+  - name: "Steppe"
+  - name: "Vale"
+  - name: "Wastes"
+    map_type: 1
+  - name: "Arena"
+    map_type: 1
+  - name: "Field"
+    map_type: 1
+    color: "#90EE90"
+  - name: "Plains"
+    map_type: 1
+    color: "#f5de85"
+  - name: "Desert"
+    map_type: 1
+  - name: "Sanctum"
+    map_type: 2
+  - name: "Caves"
+    map_type: 2
+  - name: "Cavern"
+    map_type: 2
+  - name: "Ruins"
+    map_type: 2
+  - name: "Jungle"
+    map_type: 3
+    color: "#004b49"
+  - name: "Passage"
+    map_type: 3

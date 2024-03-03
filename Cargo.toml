@@ -1,0 +1,18 @@
+[package]
+name = "arenarl"
+version = "0.1.0"
+authors = ["jzhang"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rltk = { version = "~0.8" }
+specs = { version = "~0.20", features = ["specs-derive"] }
+lazy_static = { version = "~1.4" }
+ezing = { version = "~0.2" }
+rand = { version = "~0.8" }
+getrandom = { version = "~0.2", features = ["js"] }
+derivative = { version = "~2.2" }
+serde_yaml = { version = "~0.9" }
+serde = { version = "~1.0", features = ["derive"] }
