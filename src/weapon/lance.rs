@@ -103,7 +103,7 @@ fn get_attack_intent(
     let source_point = crate::direction::Direction::point_in_direction(from_point, dir);
     let frame_data = crate::FrameData {
         startup: 15,
-        active: 15,
+        active: 1,
         recovery: 15,
     };
 

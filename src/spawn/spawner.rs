@@ -123,8 +123,8 @@ pub fn build_player(ecs: &mut World, point: Point) -> Entity {
         .with(Player)
         .with(Schedulable {
             current: 0,
-            base: 24,
-            delta: 4,
+            base: 6,
+            delta: 1,
         })
         .with(Viewshed {
             visible: Vec::new(),

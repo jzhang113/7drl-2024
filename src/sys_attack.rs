@@ -44,9 +44,13 @@ impl<'a> System<'a> for AttackSystem {
         ) = data;
         let mut finished_attacks = Vec::new();
 
-        for (ent, intent) in (&entities, &mut attacks).join() {
+        for (ent, intent, sched) in (&entities, &mut attacks, &mut schedulables).join() {
+            dbg!(sched.current);
+
             if intent.frame_data.startup > 0 {
                 intent.frame_data.startup -= 1;
+                sched.current += 1;
+
                 attacks_in_progress
                     .insert(ent, crate::AttackInProgress)
                     .expect("Failed to insert AttackInProgress flag");
@@ -55,6 +59,7 @@ impl<'a> System<'a> for AttackSystem {
 
             if intent.frame_data.active > 0 {
                 intent.frame_data.active -= 1;
+                sched.current += 1;
 
                 if intent.frame_data.active == 0 {
                     finished_attacks.push((ent, intent.frame_data.recovery));
