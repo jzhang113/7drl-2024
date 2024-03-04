@@ -50,8 +50,6 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         ctx.print(x, y + 2, "Charging!");
     }
 
-    ctx.print(x, y + 3, gs.tick);
-
     // Quest info
     y += 4;
     ctx.print(x, y, "Quest:");
