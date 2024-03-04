@@ -1,6 +1,7 @@
 use super::consts::*;
 use crate::*;
-use rltk::{Algorithm2D};
+use rltk::Algorithm2D;
+use std::collections::HashSet;
 
 // TODO
 pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
@@ -10,13 +11,13 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let positions = ecs.read_storage::<Position>();
 
     let mouse_point = ctx.mouse_point();
-    let adjusted_point = mouse_point - rltk::Point::new(SIDE_W + 1, 1);
+    let adjusted_point = mouse_point - rltk::Point::new(SIDE_W + 1, 1) + map.camera.origin;
 
-    let mut tooltip: Vec<String> = Vec::new();
+    let mut tooltip = HashSet::new();
 
     for (_rend, view, pos) in (&renderables, &viewables, &positions).join() {
         if pos.as_point() == adjusted_point {
-            tooltip.push(view.name.to_string());
+            tooltip.insert(view.name.to_string());
         }
     }
 
@@ -28,7 +29,7 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         if let Some(ent) = ent {
             let vv = viewables.get(*ent).unwrap();
 
-            tooltip.push(vv.name.to_string());
+            tooltip.insert(vv.name.to_string());
         }
     }
 
@@ -39,7 +40,7 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             1,
             RGB::named(rltk::WHITE),
             RGB::named(rltk::GREY),
-            tooltip.concat(),
+            tooltip.into_iter().collect::<Vec<_>>().concat(),
         );
     }
 }
