@@ -70,11 +70,12 @@ pub struct Stamina {
     pub recover: bool,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Component, Copy, Clone)]
 pub struct FrameData {
     pub startup: u32,
     pub active: u32,
     pub recovery: u32,
+    pub current: u32,
 }
 
 #[derive(Component, Copy, Clone)]
@@ -82,7 +83,6 @@ pub struct AttackIntent {
     pub main: crate::AttackType,
     pub modifier: Option<crate::AttackType>,
     pub loc: Point,
-    pub frame_data: FrameData,
 }
 
 #[derive(Component, Copy, Clone)]

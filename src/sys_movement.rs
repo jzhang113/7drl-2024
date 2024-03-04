@@ -11,6 +11,7 @@ impl<'a> System<'a> for MovementSystem {
         WriteStorage<'a, crate::Position>,
         WriteStorage<'a, crate::MoveIntent>,
         WriteStorage<'a, crate::AttackIntent>,
+        WriteStorage<'a, crate::FrameData>,
         WriteStorage<'a, crate::Viewshed>,
         WriteStorage<'a, crate::Facing>,
     );
@@ -24,6 +25,7 @@ impl<'a> System<'a> for MovementSystem {
             mut positions,
             mut movements,
             mut attacks,
+            mut frames,
             mut viewsheds,
             mut facings,
         ) = data;
@@ -69,9 +71,11 @@ impl<'a> System<'a> for MovementSystem {
                                     None,
                                 ),
                             )
-                            .expect(
-                                "Failed to insert new attack from moving into an occupied tile",
-                            );
+                            .ok();
+
+                        frames
+                            .insert(ent, crate::attack_type::get_frame_data(moveset.bump_attack))
+                            .ok();
                     }
                 }
                 None => {

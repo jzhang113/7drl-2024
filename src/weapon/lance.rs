@@ -17,6 +17,7 @@ enum LanceState {
     Wait,
 }
 
+#[derive(Copy, Clone)]
 enum LanceAttack {
     DrawAttack,
     Thrust { level: u8 },
@@ -79,9 +80,10 @@ fn get_attack_data(attack: LanceAttack) -> AttackData {
     };
 
     let frame_data = crate::FrameData {
-        startup: 3,
+        startup: 15,
         active: 1,
-        recovery: 6,
+        recovery: 15,
+        current: 0,
     };
 
     AttackData {
@@ -101,18 +103,12 @@ fn get_attack_intent(
     dir: crate::Direction,
 ) -> AttackIntent {
     let source_point = crate::direction::Direction::point_in_direction(from_point, dir);
-    let frame_data = crate::FrameData {
-        startup: 15,
-        active: 1,
-        recovery: 15,
-    };
 
     match attack {
         LanceAttack::DrawAttack => AttackIntent {
             main: AttackType::LanceDraw,
             modifier: None,
             loc: source_point,
-            frame_data,
         },
         LanceAttack::Thrust { level } => AttackIntent {
             main: AttackType::LanceThrust {
@@ -121,19 +117,16 @@ fn get_attack_intent(
             },
             modifier: None,
             loc: from_point,
-            frame_data,
         },
         LanceAttack::Charge => AttackIntent {
             main: AttackType::LanceCharge { dir },
             modifier: None,
             loc: from_point,
-            frame_data,
         },
         LanceAttack::Sweep => AttackIntent {
             main: AttackType::Bolt { radius: 4 },
             modifier: None,
             loc: from_point,
-            frame_data,
         },
     }
 }
@@ -244,10 +237,13 @@ impl Weapon for Lance {
         button: WeaponButton,
         from: rltk::Point,
         dir: crate::Direction,
-    ) -> Option<AttackIntent> {
+    ) -> Option<(AttackIntent, AttackData)> {
         if let Some((attack, next_state)) = self.next_state(button) {
             self.state = next_state;
-            Some(get_attack_intent(attack, from, dir))
+            Some((
+                get_attack_intent(attack, from, dir),
+                get_attack_data(attack),
+            ))
         } else {
             None
         }

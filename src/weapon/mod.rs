@@ -1,6 +1,6 @@
 pub mod lance;
 
-use crate::AttackData;
+use crate::{AttackData, AttackIntent};
 
 #[derive(Copy, Clone)]
 pub enum WeaponButton {
@@ -20,7 +20,7 @@ pub trait Weapon {
         button: WeaponButton,
         from: rltk::Point,
         dir: crate::Direction,
-    ) -> Option<crate::AttackIntent>;
+    ) -> Option<(AttackIntent, AttackData)>;
 
     fn get_attack_data(&self, button: WeaponButton) -> Option<AttackData>;
 }

@@ -21,7 +21,7 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::MoveIntent>,
         WriteStorage<'a, crate::Stamina>,
         WriteStorage<'a, crate::AttackPath>,
-        WriteStorage<'a, crate::Schedulable>,
+        ReadStorage<'a, crate::FrameData>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -40,30 +40,20 @@ impl<'a> System<'a> for AttackSystem {
             mut movements,
             mut stams,
             mut attack_paths,
-            mut schedulables,
+            frames,
         ) = data;
         let mut finished_attacks = Vec::new();
 
-        for (ent, intent, sched) in (&entities, &mut attacks, &mut schedulables).join() {
-            dbg!(sched.current);
-
-            if intent.frame_data.startup > 0 {
-                intent.frame_data.startup -= 1;
-                sched.current += 1;
-
+        for (ent, intent, frame) in (&entities, &mut attacks, &frames).join() {
+            if frame.current <= frame.startup {
                 attacks_in_progress
                     .insert(ent, crate::AttackInProgress)
                     .expect("Failed to insert AttackInProgress flag");
                 continue;
             }
 
-            if intent.frame_data.active > 0 {
-                intent.frame_data.active -= 1;
-                sched.current += 1;
-
-                if intent.frame_data.active == 0 {
-                    finished_attacks.push((ent, intent.frame_data.recovery));
-                }
+            if frame.current > frame.startup + frame.active {
+                finished_attacks.push(ent);
             }
 
             let trait_list = attack_type::get_attack_traits(intent.main);
@@ -181,13 +171,9 @@ impl<'a> System<'a> for AttackSystem {
             }
         }
 
-        for (done, recovery) in finished_attacks.iter() {
+        for done in finished_attacks.iter() {
             attacks.remove(*done);
             attacks_in_progress.remove(*done);
-
-            if let Some(sched) = schedulables.get_mut(*done) {
-                sched.current += *recovery as i32;
-            }
         }
     }
 }

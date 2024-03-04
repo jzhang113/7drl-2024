@@ -15,9 +15,16 @@ pub enum Behavior {
 #[derive(Clone)]
 pub enum NextIntent {
     None,
-    Attack { intent: crate::AttackIntent },
-    Move { intent: crate::MoveIntent },
-    PartMove { intent: crate::PartMoveIntent },
+    Attack {
+        intent: crate::AttackIntent,
+        frame: crate::FrameData,
+    },
+    Move {
+        intent: crate::MoveIntent,
+    },
+    PartMove {
+        intent: crate::PartMoveIntent,
+    },
 }
 
 #[derive(Copy, Clone)]
@@ -49,6 +56,7 @@ impl<'a> System<'a> for AiSystem {
         WriteStorage<'a, crate::MoveIntent>,
         WriteStorage<'a, crate::AttackIntent>,
         WriteStorage<'a, crate::PartMoveIntent>,
+        WriteStorage<'a, crate::FrameData>,
         WriteStorage<'a, crate::AiState>,
         ReadStorage<'a, crate::Viewshed>,
         ReadStorage<'a, crate::Moveset>,
@@ -67,6 +75,7 @@ impl<'a> System<'a> for AiSystem {
             mut moves,
             mut attacks,
             mut part_moves,
+            mut frames,
             mut states,
             viewsheds,
             movesets,
@@ -104,10 +113,12 @@ impl<'a> System<'a> for AiSystem {
             });
 
             match action {
-                NextIntent::Attack { intent } => {
+                NextIntent::Attack { intent, frame } => {
                     attacks
                         .insert(ent, intent)
                         .expect("Failed to insert attack from AI");
+
+                    frames.insert(ent, frame).ok();
                 }
                 NextIntent::Move { intent } => {
                     moves
@@ -216,13 +227,14 @@ impl AiSystem {
                         info.attack_loc,
                         None,
                     );
+                    let frame = crate::attack_type::get_frame_data(info.attack_type);
 
                     data.state.status = Behavior::AttackRecovery {
                         turns_left: crate::attack_type::get_recovery(info.attack_type),
                         info,
                     };
 
-                    return NextIntent::Attack { intent };
+                    return NextIntent::Attack { intent, frame };
                 }
                 Behavior::AttackRecovery { turns_left, info } => {
                     if turns_left > 0 {

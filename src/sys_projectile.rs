@@ -9,10 +9,11 @@ impl<'a> System<'a> for ProjectileSystem {
         ReadExpect<'a, crate::Map>,
         WriteStorage<'a, crate::AttackPath>,
         WriteStorage<'a, crate::AttackIntent>,
+        WriteStorage<'a, crate::FrameData>
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, map, mut attack_paths, mut attacks) = data;
+        let (entities, map, mut attack_paths, mut attacks, mut frames) = data;
         let mut finished = Vec::new();
 
         for (ent, attack_path) in (&entities, &mut attack_paths).join() {
@@ -44,14 +45,17 @@ impl<'a> System<'a> for ProjectileSystem {
                 main: *next_attack,
                 modifier: None,
                 loc: *impact_loc,
-                frame_data: crate::FrameData {
-                    startup: 0,
-                    active: 1,
-                    recovery: 0,
-                },
+            };
+
+            let frame = crate::FrameData {
+                startup: 0,
+                active: 1,
+                recovery: 0,
+                current: 0,
             };
 
             attacks.insert(*ent, intent).ok();
+            frames.insert(*ent, frame).ok();
         }
     }
 }

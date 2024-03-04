@@ -28,6 +28,7 @@ mod spawn;
 mod sys_ai;
 mod sys_attack;
 mod sys_death;
+mod sys_frame_data;
 mod sys_mapindex;
 mod sys_movement;
 mod sys_partbreak;
@@ -129,6 +130,7 @@ impl State {
         self.ecs.register::<PartMoveIntent>();
         self.ecs.register::<Moveset>();
         self.ecs.register::<AttackPath>();
+        self.ecs.register::<FrameData>();
 
         self.ecs.register::<AttackInProgress>();
         self.ecs.register::<BlockAttack>();
@@ -185,6 +187,7 @@ impl State {
         sys_ai::AiSystem.run_now(&self.ecs);
         sys_turn::TurnSystem.run_now(&self.ecs);
 
+        sys_frame_data::FrameDataSystem.run_now(&self.ecs);
         sys_movement::MovementSystem.run_now(&self.ecs);
         sys_attack::AttackSystem.run_now(&self.ecs);
         sys_projectile::ProjectileSystem.run_now(&self.ecs);
@@ -368,6 +371,7 @@ impl GameState for State {
         // non-map elements
         gui::sidebar::draw_sidebar(&self, ctx);
         gui::log::update_log_text(&self.ecs, ctx);
+        gui::frame_data::draw_frames(&self.ecs, ctx);
 
         match next_status {
             RunState::AwaitingInput => {
@@ -417,18 +421,14 @@ impl GameState for State {
                             // we should generally have a target at this point
                             // if we don't have a point, assume its because we won't need one later
                             let target = result.1.unwrap_or(rltk::Point::zero());
-                            let intent = crate::attack_type::get_attack_intent(
+                            crate::attack_type::insert_attack(
+                                &mut self.ecs,
+                                None,
                                 attack_type,
                                 target,
-                                self.attack_modifier,
                             );
-                            let player = self.ecs.fetch::<Entity>();
-                            let mut attacks = self.ecs.write_storage::<AttackIntent>();
 
-                            attacks
-                                .insert(*player, intent)
-                                .expect("Failed to insert attack from Player");
-
+                            // TODO: remove attack_modifier
                             self.attack_modifier = None;
                         }
 

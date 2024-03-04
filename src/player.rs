@@ -11,6 +11,7 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
     let players = ecs.read_storage::<Player>();
     let mut movements = ecs.write_storage::<MoveIntent>();
     let mut attacks = ecs.write_storage::<AttackIntent>();
+    let mut frames = ecs.write_storage::<FrameData>();
     let mut healths = ecs.write_storage::<Health>();
     let openables = ecs.read_storage::<Openable>();
     let npcs = ecs.read_storage::<Npc>();
@@ -70,10 +71,13 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                         Point::new(new_x, new_y),
                         None,
                     );
+                    let frame = crate::attack_type::get_frame_data(AttackType::Melee);
 
                     attacks
                         .insert(*player, attack)
                         .expect("Failed to insert new attack from player");
+
+                    frames.insert(*player, frame).ok();
 
                     return RunState::Running;
                     // Keep bump attacks?
@@ -109,6 +113,7 @@ fn try_move_charging(
 
 fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
     let mut attacks = gs.ecs.write_storage::<AttackIntent>();
+    let mut frames = gs.ecs.write_storage::<FrameData>();
     let positions = gs.ecs.read_storage::<Position>();
     let facings = gs.ecs.read_storage::<Facing>();
     let mut stams = gs.ecs.write_storage::<Stamina>();
@@ -135,7 +140,7 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
         stamina.current -= data.stam_cost;
         stamina.recover = false;
 
-        if let Some(attack) =
+        if let Some((attack, data)) =
             gs.player_inventory
                 .weapon
                 .invoke_attack(button, pos.as_point(), facing.direction)
@@ -143,6 +148,8 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
             attacks
                 .insert(*player, attack)
                 .expect("Failed to insert new attack from player");
+
+            frames.insert(*player, data.frame_data).ok();
 
             return RunState::Running;
         }
@@ -157,6 +164,7 @@ fn handle_charging(gs: &mut State) -> bool {
 
     let mut movements = gs.ecs.write_storage::<MoveIntent>();
     let mut attacks = gs.ecs.write_storage::<AttackIntent>();
+    let mut frames = gs.ecs.write_storage::<FrameData>();
 
     let (mut player_x, mut player_y) = {
         let pos = gs.ecs.read_storage::<Position>();
@@ -194,10 +202,12 @@ fn handle_charging(gs: &mut State) -> bool {
                 gs.player_charging.1,
             );
 
-            if let Some(attack) = attack {
+            if let Some((attack, data)) = attack {
                 attacks
                     .insert(*player, attack)
                     .expect("Failed to insert new attack from player");
+
+                frames.insert(*player, data.frame_data).ok();
             }
 
             return false;

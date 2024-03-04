@@ -1,6 +1,7 @@
 use crate::{AttackIntent, FrameData, RangeType};
 use derivative::Derivative;
 use rltk::Point;
+use specs::prelude::*;
 use std::collections::HashMap;
 
 lazy_static! {
@@ -72,6 +73,25 @@ pub fn each_attack_target(attack_type: AttackType, from_point: Point) -> Vec<Poi
     crate::range_type::resolve_range_at(&shape, from_point)
 }
 
+pub fn insert_attack(
+    ecs: &mut World,
+    source: Option<&Entity>,
+    attack_type: AttackType,
+    loc: Point,
+) {
+    let mut attacks = ecs.write_storage::<AttackIntent>();
+    let mut frames = ecs.write_storage::<FrameData>();
+    let player = ecs.fetch::<Entity>();
+    let attack_source = source.unwrap_or(&player);
+
+    attacks
+        .insert(*attack_source, get_attack_intent(attack_type, loc, None))
+        .ok();
+    frames
+        .insert(*attack_source, get_frame_data(attack_type))
+        .ok();
+}
+
 // convert an attack into an intent that can be executed by the event system
 pub fn get_attack_intent(
     attack_type: AttackType,
@@ -82,11 +102,15 @@ pub fn get_attack_intent(
         main: attack_type,
         modifier: attack_modifier,
         loc,
-        frame_data: FrameData {
-            startup: get_startup(attack_type),
-            active: get_active(attack_type),
-            recovery: get_recovery(attack_type),
-        },
+    }
+}
+
+pub fn get_frame_data(attack_type: AttackType) -> FrameData {
+    FrameData {
+        startup: get_startup(attack_type),
+        active: get_active(attack_type),
+        recovery: get_recovery(attack_type),
+        current: 0,
     }
 }
 
