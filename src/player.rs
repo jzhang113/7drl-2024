@@ -66,7 +66,7 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 } else {
                     // bump attack
                     let attack = crate::attack_type::get_attack_intent(
-                        AttackType::Punch,
+                        AttackType::Melee,
                         Point::new(new_x, new_y),
                         None,
                     );
@@ -128,6 +128,7 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
                 attack_type: data.attack_type,
                 cursor_point: pos.as_point(),
                 validity_mode: TargettingValid::All,
+                show_path: data.needs_path,
             };
         }
 
@@ -142,11 +143,12 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
             attacks
                 .insert(*player, attack)
                 .expect("Failed to insert new attack from player");
+
+            return RunState::Running;
         }
-        return RunState::Running;
-    } else {
-        return RunState::AwaitingInput;
     }
+
+    RunState::AwaitingInput
 }
 
 fn handle_charging(gs: &mut State) -> bool {
@@ -449,6 +451,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunS
                         attack_type: AttackType::Dodge,
                         cursor_point: p,
                         validity_mode: crate::TargettingValid::Unblocked,
+                        show_path: true,
                     };
                 } else if let Some(move_intent) = handle_dodge(&mut gs.ecs) {
                     {
@@ -493,11 +496,13 @@ pub fn ranged_target(
     cursor: rltk::Point,
     tiles_in_range: Vec<Point>,
     validity_mode: crate::TargettingValid,
+    show_path: bool,
 ) -> (SelectionResult, Option<Point>) {
-    let players = gs.ecs.read_storage::<Player>();
+    let player = gs.ecs.fetch::<Entity>();
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
     let map = gs.ecs.fetch::<Map>();
     let camera_point = map.camera.origin;
+    let positions = gs.ecs.read_storage::<Position>();
 
     let mut valid_target = false;
 
@@ -514,7 +519,8 @@ pub fn ranged_target(
 
         // Highlight available target cells
         let mut available_cells = Vec::new();
-        for (_player, viewshed) in (&players, &viewsheds).join() {
+
+        if let Some(viewshed) = viewsheds.get(*player) {
             // We have a viewshed
             for point in &viewshed.visible {
                 if tiles_in_range.contains(point) {
@@ -542,7 +548,7 @@ pub fn ranged_target(
                 .iter()
                 .filter(|point| {
                     let idx = map.get_index(point.x, point.y);
-                    map.creature_map.get(&idx).is_some()
+                    map.creature_map.contains_key(&idx)
                 })
                 .copied()
                 .collect(),
@@ -566,6 +572,21 @@ pub fn ranged_target(
             gui::consts::MAP_SCREEN_Y + cursor.y - camera_point.y,
             cursor_color,
         );
+
+        if show_path {
+            let player_point = positions.get(*player).unwrap().as_point();
+            let mut path = rltk::line2d_bresenham(cursor, player_point);
+            path.pop();
+
+            for path_point in path {
+                ctx.set_bg(
+                    gui::consts::MAP_SCREEN_X + path_point.x - camera_point.x,
+                    gui::consts::MAP_SCREEN_Y + path_point.y - camera_point.y,
+                    cursor_color,
+                )
+            }
+        }
+
         ctx.set_active_console(1);
 
         if valid_target {
@@ -597,11 +618,13 @@ pub fn ranged_target(
                         SelectionResult::Selected,
                         Some(Point::new(cursor.x, cursor.y)),
                     );
-                } else if validity_mode == TargettingValid::None {
-                    return (SelectionResult::Selected, None);
-                } else {
-                    return (SelectionResult::Canceled, None);
                 }
+
+                if validity_mode == TargettingValid::None {
+                    return (SelectionResult::Selected, None);
+                }
+
+                return (SelectionResult::Canceled, None);
             }
             VirtualKeyCode::Tab => {
                 let length = gs.tab_targets.len();

@@ -20,6 +20,8 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::Invulnerable>,
         WriteStorage<'a, crate::MoveIntent>,
         WriteStorage<'a, crate::Stamina>,
+        WriteStorage<'a, crate::AttackPath>,
+        WriteStorage<'a, crate::Schedulable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -37,21 +39,29 @@ impl<'a> System<'a> for AttackSystem {
             mut invulns,
             mut movements,
             mut stams,
+            mut attack_paths,
+            mut schedulables,
         ) = data;
         let mut finished_attacks = Vec::new();
 
         for (ent, intent) in (&entities, &mut attacks).join() {
-            if intent.delay > 0 {
-                intent.delay -= 1;
+            if intent.frame_data.startup > 0 {
+                intent.frame_data.startup -= 1;
                 attacks_in_progress
                     .insert(ent, crate::AttackInProgress)
                     .expect("Failed to insert AttackInProgress flag");
                 continue;
             }
 
-            finished_attacks.push(ent);
-            let trait_list = attack_type::get_attack_traits(intent.main);
+            if intent.frame_data.active > 0 {
+                intent.frame_data.active -= 1;
 
+                if intent.frame_data.active == 0 {
+                    finished_attacks.push((ent, intent.frame_data.recovery));
+                }
+            }
+
+            let trait_list = attack_type::get_attack_traits(intent.main);
             for att_trait in trait_list {
                 match att_trait {
                     crate::AttackTrait::Knockback { amount: _ } => {
@@ -137,13 +147,42 @@ impl<'a> System<'a> for AttackSystem {
                             *run_state = crate::RunState::Charging { dir, speed: 1 };
                         }
                     }
+                    crate::AttackTrait::FollowsPath => {
+                        if let Some(pos) = positions.get(ent) {
+                            let mut path =
+                                rltk::line2d(rltk::LineAlg::Bresenham, intent.loc, pos.as_point());
+                            path.pop();
+                            path.reverse();
+
+                            // TODO: This should be passed in
+                            let on_hit = crate::AttackType::Melee;
+                            let projectile = entities.create();
+
+                            attack_paths
+                                .insert(
+                                    projectile,
+                                    crate::AttackPath {
+                                        path,
+                                        index: 0,
+                                        step_delay: 3,
+                                        cur_delay: 0,
+                                        on_hit,
+                                    },
+                                )
+                                .ok();
+                        }
+                    }
                 }
             }
         }
 
-        for done in finished_attacks.iter() {
+        for (done, recovery) in finished_attacks.iter() {
             attacks.remove(*done);
             attacks_in_progress.remove(*done);
+
+            if let Some(sched) = schedulables.get_mut(*done) {
+                sched.current += *recovery as i32;
+            }
         }
     }
 }

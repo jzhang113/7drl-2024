@@ -1,4 +1,4 @@
-use crate::{AttackIntent, RangeType};
+use crate::{AttackIntent, FrameData, RangeType};
 use derivative::Derivative;
 use rltk::Point;
 use std::collections::HashMap;
@@ -11,8 +11,8 @@ lazy_static! {
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Derivative)]
 #[derivative(Hash)]
 pub enum AttackType {
-    Sweep,
-    Punch,
+    Area,
+    Melee,
     Stun,
     Push,
     Dodge,
@@ -21,10 +21,10 @@ pub enum AttackType {
     LanceDraw,
     LanceThrust { level: u8, dest: Point },
     LanceCharge { dir: crate::Direction },
-    LanceSweep,
     // enemy specific attacks
     Haymaker,
-    Ranged,
+    Ranged { radius: i32 },
+    Bolt { radius: i32 },
 }
 
 #[derive(PartialEq, Copy, Clone)]
@@ -36,6 +36,17 @@ pub enum AttackTrait {
     Invulnerable { duration: u32 },
     LanceCharge { dir: crate::Direction },
     NeedsStamina { amount: i32 },
+    FollowsPath,
+}
+
+pub struct AttackData {
+    pub needs_target: bool,
+    pub needs_path: bool,
+    pub name: String,
+    pub stam_cost: i32,
+    pub attack_type: AttackType,
+    pub traits: Vec<AttackTrait>,
+    pub frame_data: FrameData,
 }
 
 // check if an attack is can be executed
@@ -71,85 +82,65 @@ pub fn get_attack_intent(
         main: attack_type,
         modifier: attack_modifier,
         loc,
-        delay: get_attack_delay(attack_type),
+        frame_data: FrameData {
+            startup: get_startup(attack_type),
+            active: get_active(attack_type),
+            recovery: get_recovery(attack_type),
+        },
     }
 }
 
 pub fn get_attack_range(attack_type: AttackType) -> RangeType {
     match attack_type {
-        AttackType::Sweep => RangeType::Single,
-        AttackType::Punch => RangeType::Square { size: 1 },
+        AttackType::Area => RangeType::Single,
+        AttackType::Melee => RangeType::Square { size: 1 },
         AttackType::Stun => RangeType::Square { size: 1 },
         AttackType::Push => RangeType::Square { size: 1 },
         AttackType::Dodge => RangeType::Diamond { size: 2 },
         AttackType::Recover => RangeType::Single,
         AttackType::Haymaker => RangeType::Square { size: 1 },
-        AttackType::Ranged => RangeType::Square { size: 3 },
+        AttackType::Ranged { radius } => RangeType::Square { size: radius },
+        AttackType::Bolt { radius } => RangeType::Square { size: radius },
         AttackType::LanceDraw => RangeType::Square { size: 1 },
         AttackType::LanceThrust { .. } => RangeType::Square { size: 1 },
         AttackType::LanceCharge { .. } => RangeType::Single,
-        AttackType::LanceSweep => RangeType::Square { size: 1 },
-    }
-}
-
-pub fn get_attack_power(attack_type: AttackType) -> i32 {
-    match attack_type {
-        AttackType::Sweep => 1,
-        AttackType::Punch => 1,
-        AttackType::Stun => 0,
-        AttackType::Push => 0,
-        AttackType::Dodge => 0,
-        AttackType::Recover => 0,
-        AttackType::Haymaker => 3,
-        AttackType::Ranged => 1,
-        AttackType::LanceDraw => 1,
-        AttackType::LanceThrust { level, .. } => level as i32,
-        AttackType::LanceCharge { .. } => 0,
-        AttackType::LanceSweep => 2,
     }
 }
 
 pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
     match attack_type {
-        AttackType::Sweep => RangeType::Square { size: 3 },
-        AttackType::Punch => RangeType::Single,
+        AttackType::Area => RangeType::Square { size: 3 },
+        AttackType::Melee => RangeType::Single,
         AttackType::Stun => RangeType::Single,
         AttackType::Push => RangeType::Single,
         AttackType::Dodge => RangeType::Single,
         AttackType::Recover => RangeType::Single,
         AttackType::Haymaker => RangeType::Single,
-        AttackType::Ranged => RangeType::Single,
+        AttackType::Ranged { .. } => RangeType::Single,
+        AttackType::Bolt { .. } => RangeType::Single,
         AttackType::LanceDraw => RangeType::Single,
         AttackType::LanceThrust { dest, .. } => RangeType::Path { dest },
         AttackType::LanceCharge { .. } => RangeType::Single,
-        AttackType::LanceSweep => RangeType::Square { size: 1 },
     }
 }
 
-pub fn get_attack_delay(attack_type: AttackType) -> i32 {
+pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Sweep => 2,
-        AttackType::Punch => 0,
+        AttackType::Area => 1,
         AttackType::Stun => 2,
-        AttackType::Push => 0,
-        AttackType::Recover => 0,
-        AttackType::Haymaker => -4,
-        AttackType::Ranged => 0,
+
         _ => 0,
     }
 }
 
-pub fn get_startup(attack_type: AttackType) -> i32 {
-    match attack_type {
-        AttackType::Sweep => 1,
-        _ => 0,
-    }
+pub fn get_active(attack_type: AttackType) -> u32 {
+    1
 }
 
-pub fn get_recovery(attack_type: AttackType) -> i32 {
+pub fn get_recovery(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Sweep => 1,
-        AttackType::Ranged => 1,
+        AttackType::Area => 1,
+        AttackType::Ranged { .. } => 1,
         _ => 0,
     }
 }
@@ -172,7 +163,7 @@ fn startup_actions() -> HashMap<AttackType, Vec<crate::NextIntent>> {
     let mut action_map = HashMap::new();
 
     action_map.insert(
-        AttackType::Sweep,
+        AttackType::Area,
         vec![crate::NextIntent::PartMove {
             intent: crate::PartMoveIntent {
                 part_delta: vec![rltk::Point::new(-1, 1), rltk::Point::new(1, -1)],
@@ -187,7 +178,7 @@ fn recovery_actions() -> HashMap<AttackType, Vec<crate::NextIntent>> {
     let mut action_map = HashMap::new();
 
     action_map.insert(
-        AttackType::Sweep,
+        AttackType::Area,
         vec![crate::NextIntent::PartMove {
             intent: crate::PartMoveIntent {
                 part_delta: vec![rltk::Point::new(1, -1), rltk::Point::new(-1, 1)],
@@ -198,29 +189,11 @@ fn recovery_actions() -> HashMap<AttackType, Vec<crate::NextIntent>> {
     action_map
 }
 
-pub fn get_attack_name(attack_type: AttackType) -> String {
-    match attack_type {
-        AttackType::Sweep => "sweep",
-        AttackType::Punch => "punch",
-        AttackType::Stun => "stun",
-        AttackType::Push => "push",
-        AttackType::Dodge => "dodge",
-        AttackType::Recover => "recover",
-        AttackType::Haymaker => "haymaker",
-        AttackType::Ranged => "shoot",
-        AttackType::LanceDraw => "Draw Atk",
-        AttackType::LanceThrust { .. } => "Thrust",
-        AttackType::LanceCharge { .. } => "Charge",
-        AttackType::LanceSweep => "Sweep",
-    }
-    .to_string()
-}
-
 use AttackTrait::*;
 pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
     match attack_type {
-        AttackType::Sweep => vec![Damage { amount: 2 }],
-        AttackType::Punch => vec![Damage { amount: 1 }],
+        AttackType::Area => vec![Damage { amount: 2 }],
+        AttackType::Melee => vec![Damage { amount: 1 }],
         AttackType::Stun => vec![Damage { amount: 0 }],
         AttackType::Push => vec![Knockback { amount: 2 }],
         AttackType::Dodge => vec![
@@ -232,12 +205,12 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         ], // 24 / 4 = 6 ticks
         AttackType::Recover => vec![Heal { amount: 2 }],
         AttackType::Haymaker => vec![Damage { amount: 2 }],
-        AttackType::Ranged => vec![Damage { amount: 1 }],
+        AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
+        AttackType::Bolt { .. } => vec![FollowsPath],
         AttackType::LanceDraw => vec![Damage { amount: 1 }],
         AttackType::LanceThrust { level, .. } => vec![Damage {
             amount: level as i32,
         }],
         AttackType::LanceCharge { dir } => vec![LanceCharge { dir }],
-        AttackType::LanceSweep => vec![Damage { amount: 2 }],
     }
 }

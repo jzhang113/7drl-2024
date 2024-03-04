@@ -1,6 +1,6 @@
 use super::consts::*;
 use crate::*;
-use rltk::{Algorithm2D};
+use rltk::Algorithm2D;
 
 pub fn draw_all(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
     // map elements
@@ -169,6 +169,7 @@ pub fn draw_blocked_tiles(ecs: &World, ctx: &mut Rltk) {
 pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
     let attacks = ecs.read_storage::<AttackIntent>();
     let in_progress = ecs.read_storage::<AttackInProgress>();
+    let attack_paths = ecs.read_storage::<AttackPath>();
     let map = ecs.fetch::<Map>();
 
     for (attack, _) in (&attacks, &in_progress).join() {
@@ -179,6 +180,28 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
             }
 
             highlight_bg(ctx, &map.camera.origin, &point, RGB::named(rltk::DARKRED));
+        }
+        ctx.set_active_console(1);
+    }
+
+    for attack_path in (&attack_paths).join() {
+        ctx.set_active_console(0);
+        for (idx, point) in attack_path.path.iter().enumerate() {
+            if !map.camera.on_screen(*point) {
+                continue;
+            }
+
+            if idx < attack_path.index {
+                continue;
+            }
+
+            let color = if attack_path.index == idx {
+                RGB::named(rltk::DARKRED)
+            } else {
+                RGB::named(rltk::DARKGREEN)
+            };
+
+            highlight_bg(ctx, &map.camera.origin, point, color);
         }
         ctx.set_active_console(1);
     }

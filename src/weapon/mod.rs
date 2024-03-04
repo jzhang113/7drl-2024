@@ -1,19 +1,12 @@
 pub mod lance;
 
-use crate::AttackType;
+use crate::AttackData;
 
 #[derive(Copy, Clone)]
 pub enum WeaponButton {
     Light,
     Heavy,
     Special,
-}
-
-pub struct AttackData {
-    pub needs_target: bool,
-    pub name: String,
-    pub stam_cost: i32,
-    pub attack_type: AttackType,
 }
 
 pub trait Weapon {

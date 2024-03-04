@@ -213,8 +213,8 @@ pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
             max: 10,
         })
         .with(Moveset {
-            moves: vec![(AttackType::Sweep, 0.25), (AttackType::Punch, 0.75)],
-            bump_attack: AttackType::Punch,
+            moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
+            bump_attack: AttackType::Melee,
         })
         .with(MultiTile {
             bounds: all_bounds(&part_list),
@@ -266,8 +266,8 @@ pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
             max: 10,
         })
         .with(Moveset {
-            moves: vec![(AttackType::Sweep, 0.25), (AttackType::Punch, 0.75)],
-            bump_attack: AttackType::Punch,
+            moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
+            bump_attack: AttackType::Melee,
         })
         .with(MultiTile {
             bounds: all_bounds(&part_list),
@@ -324,8 +324,11 @@ pub fn build_archer(ecs: &mut World, point: Point) -> Entity {
             part_list: part_list,
         })
         .with(Moveset {
-            moves: vec![(AttackType::Punch, 0.25), (AttackType::Ranged, 0.75)],
-            bump_attack: AttackType::Punch,
+            moves: vec![
+                (AttackType::Melee, 0.25),
+                (AttackType::Bolt { radius: 6 }, 0.75),
+            ],
+            bump_attack: AttackType::Melee,
         })
         .build()
 }

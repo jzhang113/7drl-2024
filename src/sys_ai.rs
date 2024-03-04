@@ -7,8 +7,8 @@ pub enum Behavior {
     Wander,
     Chase { target_point: rltk::Point },
     Attack { info: AttackInfo },
-    AttackStartup { turns_left: i32, info: AttackInfo },
-    AttackRecovery { turns_left: i32, info: AttackInfo },
+    AttackStartup { turns_left: u32, info: AttackInfo },
+    AttackRecovery { turns_left: u32, info: AttackInfo },
     Flee,
 }
 

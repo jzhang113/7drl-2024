@@ -1,5 +1,5 @@
-use super::{AttackData, Weapon, WeaponButton};
-use crate::{AttackIntent, AttackType};
+use super::{Weapon, WeaponButton};
+use crate::{AttackData, AttackIntent, AttackTrait, AttackType};
 
 pub struct Lance {
     state: LanceState,
@@ -26,6 +26,11 @@ enum LanceAttack {
 
 fn get_attack_data(attack: LanceAttack) -> AttackData {
     let needs_target = match attack {
+        LanceAttack::Sweep => true,
+        _ => false,
+    };
+
+    let needs_path = match attack {
         LanceAttack::Sweep => true,
         _ => false,
     };
@@ -58,17 +63,35 @@ fn get_attack_data(attack: LanceAttack) -> AttackData {
     };
 
     let attack_type = match attack {
-        LanceAttack::Sweep => AttackType::Ranged,
+        LanceAttack::Sweep => AttackType::Bolt { radius: 6 },
         LanceAttack::DrawAttack => AttackType::LanceDraw,
-        LanceAttack::Thrust { level } => AttackType::Punch,
-        LanceAttack::Charge => AttackType::Punch,
+        LanceAttack::Thrust { level } => AttackType::Melee,
+        LanceAttack::Charge => AttackType::Melee,
+    };
+
+    let traits = match attack {
+        LanceAttack::Sweep => vec![AttackTrait::FollowsPath],
+        LanceAttack::DrawAttack => vec![AttackTrait::Damage { amount: 1 }],
+        LanceAttack::Thrust { level } => vec![AttackTrait::Damage {
+            amount: level as i32,
+        }],
+        LanceAttack::Charge => vec![AttackTrait::Damage { amount: 1 }],
+    };
+
+    let frame_data = crate::FrameData {
+        startup: 3,
+        active: 1,
+        recovery: 6,
     };
 
     AttackData {
         needs_target,
+        needs_path,
         name,
         stam_cost,
         attack_type,
+        traits,
+        frame_data,
     }
 }
 
@@ -78,13 +101,18 @@ fn get_attack_intent(
     dir: crate::Direction,
 ) -> AttackIntent {
     let source_point = crate::direction::Direction::point_in_direction(from_point, dir);
+    let frame_data = crate::FrameData {
+        startup: 15,
+        active: 15,
+        recovery: 15,
+    };
 
     match attack {
         LanceAttack::DrawAttack => AttackIntent {
             main: AttackType::LanceDraw,
             modifier: None,
             loc: source_point,
-            delay: 0,
+            frame_data,
         },
         LanceAttack::Thrust { level } => AttackIntent {
             main: AttackType::LanceThrust {
@@ -93,19 +121,19 @@ fn get_attack_intent(
             },
             modifier: None,
             loc: from_point,
-            delay: 0,
+            frame_data,
         },
         LanceAttack::Charge => AttackIntent {
             main: AttackType::LanceCharge { dir },
             modifier: None,
             loc: from_point,
-            delay: 0,
+            frame_data,
         },
         LanceAttack::Sweep => AttackIntent {
-            main: AttackType::Ranged,
+            main: AttackType::Bolt { radius: 4 },
             modifier: None,
             loc: from_point,
-            delay: 1,
+            frame_data,
         },
     }
 }

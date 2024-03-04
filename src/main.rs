@@ -34,6 +34,7 @@ mod sys_partbreak;
 mod sys_particle;
 mod sys_partmove;
 mod sys_pickup;
+mod sys_projectile;
 mod sys_push;
 mod sys_turn;
 mod sys_visibility;
@@ -69,6 +70,7 @@ pub enum RunState {
         attack_type: AttackType,
         cursor_point: rltk::Point,
         validity_mode: TargettingValid,
+        show_path: bool,
     },
     ViewEnemy {
         index: u32,
@@ -126,6 +128,7 @@ impl State {
         self.ecs.register::<MoveIntent>();
         self.ecs.register::<PartMoveIntent>();
         self.ecs.register::<Moveset>();
+        self.ecs.register::<AttackPath>();
 
         self.ecs.register::<AttackInProgress>();
         self.ecs.register::<BlockAttack>();
@@ -184,6 +187,7 @@ impl State {
 
         sys_movement::MovementSystem.run_now(&self.ecs);
         sys_attack::AttackSystem.run_now(&self.ecs);
+        sys_projectile::ProjectileSystem.run_now(&self.ecs);
 
         // ensure indexes are correct before handling part movements
         sys_mapindex::MapIndexSystem.run_now(&self.ecs);
@@ -381,12 +385,19 @@ impl GameState for State {
                 attack_type,
                 cursor_point,
                 validity_mode,
+                show_path,
             } => {
                 let range_type = crate::attack_type::get_attack_range(attack_type);
                 let tiles_in_range = crate::range_type::resolve_range_at(&range_type, player_point);
 
-                let result =
-                    player::ranged_target(self, ctx, cursor_point, tiles_in_range, validity_mode);
+                let result = player::ranged_target(
+                    self,
+                    ctx,
+                    cursor_point,
+                    tiles_in_range,
+                    validity_mode,
+                    show_path,
+                );
                 match result.0 {
                     player::SelectionResult::Canceled => {
                         next_status = RunState::AwaitingInput;
@@ -397,6 +408,7 @@ impl GameState for State {
                                 attack_type,
                                 cursor_point: new_cursor,
                                 validity_mode,
+                                show_path,
                             }
                         }
                     }
@@ -430,7 +442,7 @@ impl GameState for State {
             }
             RunState::Running => {
                 self.run_systems();
-                std::thread::sleep(std::time::Duration::from_millis(10));
+                std::thread::sleep(std::time::Duration::from_millis(50));
                 next_status = *self.ecs.fetch::<RunState>();
             }
             RunState::HitPause { remaining_time } => {

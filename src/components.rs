@@ -70,18 +70,34 @@ pub struct Stamina {
     pub recover: bool,
 }
 
+#[derive(Copy, Clone)]
+pub struct FrameData {
+    pub startup: u32,
+    pub active: u32,
+    pub recovery: u32,
+}
+
 #[derive(Component, Copy, Clone)]
 pub struct AttackIntent {
     pub main: crate::AttackType,
     pub modifier: Option<crate::AttackType>,
     pub loc: Point,
-    pub delay: i32,
+    pub frame_data: FrameData,
 }
 
 #[derive(Component, Copy, Clone)]
 pub struct MoveIntent {
     pub loc: rltk::Point,
     pub force_facing: Option<crate::Direction>,
+}
+
+#[derive(Component)]
+pub struct AttackPath {
+    pub path: Vec<rltk::Point>,
+    pub index: usize,
+    pub step_delay: u32,
+    pub cur_delay: u32,
+    pub on_hit: crate::AttackType,
 }
 
 #[derive(Component)]
