@@ -57,7 +57,7 @@ impl<'a> System<'a> for AttackSystem {
                 continue;
             }
 
-            if frame.current > frame.startup + frame.active {
+            if frame.current >= frame.startup + frame.active {
                 finished_attacks.push(ent);
             }
 
