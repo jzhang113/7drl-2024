@@ -13,21 +13,15 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
     for (_, frame) in (&players, &frames).join() {
         ctx.set_active_console(0);
         for x in 0..frame.startup {
-            ctx.set(
-                x_start + x,
-                y_start,
-                RGB::named(rltk::GREEN),
-                RGB::named(rltk::BLACK),
-                219,
-            );
+            ctx.set(x_start + x, y_start, frame_startup_color(), bg_color(), 219);
         }
 
         for x in 0..frame.active {
             ctx.set(
                 x_start + x + frame.startup,
                 y_start,
-                RGB::named(rltk::ORANGE),
-                RGB::named(rltk::BLACK),
+                frame_active_color(),
+                bg_color(),
                 219,
             );
         }
@@ -36,8 +30,8 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
             ctx.set(
                 x_start + x + frame.startup + frame.active,
                 y_start,
-                RGB::named(rltk::BLUE),
-                RGB::named(rltk::BLACK),
+                frame_recovery_color(),
+                bg_color(),
                 219,
             );
         }
@@ -46,8 +40,8 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
         ctx.set(
             x_start + frame.current,
             y_start,
-            RGB::named(rltk::RED),
-            RGB::named(rltk::BLACK),
+            frame_current_color(),
+            bg_color(),
             223,
         );
     }

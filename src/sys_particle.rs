@@ -51,7 +51,7 @@ impl ParticleBuilder {
 
     pub fn make_hit_particle(&mut self, point: Point) {
         self.make_particle(crate::ParticleRequest {
-            color: rltk::RGB::named(rltk::RED),
+            color: crate::particle_hit_color(),
             lifetime: 300.0,
             position: point,
             symbol: rltk::to_cp437('!'),
@@ -61,7 +61,7 @@ impl ParticleBuilder {
 
     pub fn make_bg_particle(&mut self, point: Point) {
         self.make_particle(crate::ParticleRequest {
-            color: rltk::RGB::named(rltk::DARKRED),
+            color: crate::particle_bg_color(),
             lifetime: 300.0,
             position: point,
             symbol: rltk::to_cp437('▒'),

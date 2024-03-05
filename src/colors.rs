@@ -76,14 +76,6 @@ pub fn attack_target_color() -> RGB {
     RGB::named(rltk::RED)
 }
 
-pub fn slow_card_color() -> RGB {
-    RGB::from_hex("#4E5166").unwrap()
-}
-
-pub fn fast_card_color() -> RGB {
-    RGB::from_hex("#AFE0CE").unwrap()
-}
-
 pub fn valid_cursor_color() -> RGB {
     RGB::named(rltk::CYAN)
 }
@@ -92,8 +84,12 @@ pub fn invalid_cursor_color() -> RGB {
     RGB::named(rltk::RED)
 }
 
+pub fn attack_intent_color() -> RGB {
+    RGB::named(rltk::PURPLE)
+}
+
 pub fn tiles_in_range_color() -> RGB {
-    rltk::RGB::named(rltk::BLUE)
+    RGB::named(rltk::BLUE)
 }
 
 pub fn header_message_color() -> RGB {
@@ -105,7 +101,11 @@ pub fn header_err_color() -> RGB {
 }
 
 pub fn particle_hit_color() -> RGB {
-    rltk::RGB::named(rltk::RED)
+    RGB::named(rltk::RED)
+}
+
+pub fn particle_bg_color() -> RGB {
+    RGB::named(rltk::DARKRED)
 }
 
 pub fn health_color() -> RGB {
@@ -114,4 +114,20 @@ pub fn health_color() -> RGB {
 
 pub fn map_exit_color() -> RGB {
     RGB::named(rltk::WHITE)
+}
+
+pub fn frame_startup_color() -> RGB {
+    RGB::named(rltk::GREEN)
+}
+
+pub fn frame_active_color() -> RGB {
+    RGB::named(rltk::ORANGE)
+}
+
+pub fn frame_recovery_color() -> RGB {
+    RGB::named(rltk::BLUE)
+}
+
+pub fn frame_current_color() -> RGB {
+    RGB::named(rltk::RED)
 }

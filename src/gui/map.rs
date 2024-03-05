@@ -190,7 +190,12 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
                 continue;
             }
 
-            highlight_bg(ctx, &map.camera.origin, &point, RGB::named(rltk::DARKRED));
+            highlight_bg(
+                ctx,
+                &map.camera.origin,
+                &point,
+                crate::attack_intent_color(),
+            );
         }
     }
 
@@ -205,9 +210,9 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
             }
 
             let color = if attack_path.index == idx {
-                RGB::named(rltk::DARKRED)
+                crate::attack_intent_color()
             } else {
-                RGB::named(rltk::DARKGREEN)
+                crate::valid_cursor_color()
             };
 
             highlight_bg(ctx, &map.camera.origin, point, color);
