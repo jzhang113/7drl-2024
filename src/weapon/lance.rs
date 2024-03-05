@@ -71,7 +71,10 @@ fn get_attack_data(attack: LanceAttack) -> AttackData {
     };
 
     let traits = match attack {
-        LanceAttack::Sweep => vec![AttackTrait::FollowsPath],
+        LanceAttack::Sweep => vec![AttackTrait::FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::Area,
+        }],
         LanceAttack::DrawAttack => vec![AttackTrait::Damage { amount: 1 }],
         LanceAttack::Thrust { level } => vec![AttackTrait::Damage {
             amount: level as i32,

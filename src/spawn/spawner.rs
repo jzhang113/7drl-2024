@@ -156,8 +156,8 @@ pub fn build_enemy_base(ecs: &mut World) -> EntityBuilder {
         .with(ViewableIndex { list_index: None })
         .with(Schedulable {
             current: 0,
-            base: 24,
-            delta: 4,
+            base: 6,
+            delta: 1,
         })
         .with(Viewshed {
             visible: Vec::new(),
@@ -400,8 +400,8 @@ fn build_npc_base(ecs: &mut World, point: Point) -> EntityBuilder {
         .with(ViewableIndex { list_index: None })
         .with(Schedulable {
             current: 0,
-            base: 24,
-            delta: 4,
+            base: 6,
+            delta: 1,
         })
         .with(Viewshed {
             visible: Vec::new(),

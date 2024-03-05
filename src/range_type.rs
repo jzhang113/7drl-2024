@@ -6,7 +6,8 @@ pub enum RangeType {
     Single,
     Square { size: i32 },
     Diamond { size: i32 },
-    Path { dest: rltk::Point },
+    Path { dest: Point },
+    Ray { dir: crate::Direction, len: i32 },
     Custom { offsets: Vec<(i32, i32)> },
 }
 
@@ -38,6 +39,15 @@ pub fn resolve_range_at(range: &RangeType, center: Point) -> Vec<Point> {
         }
         RangeType::Path { dest } => {
             targets = rltk::Bresenham::new(*dest, center).collect();
+        }
+        RangeType::Ray { dir, len } => {
+            let mut cur_point = center;
+            let offset = dir.to_point();
+
+            for _ in 0..*len {
+                cur_point = Point::new(cur_point.x + offset.x, cur_point.y + offset.y);
+                targets.push(cur_point);
+            }
         }
         RangeType::Custom { offsets } => {
             for (dx, dy) in offsets {

@@ -50,7 +50,10 @@ impl<'a> System<'a> for AttackSystem {
             let trait_list = attack_type::get_attack_traits(intent.main);
 
             if frame.current <= frame.startup {
-                if !trait_list.contains(&crate::AttackTrait::FollowsPath) {
+                if !trait_list
+                    .iter()
+                    .any(|tr| matches!(tr, attack_type::AttackTrait::FollowsPath { .. }))
+                {
                     attacks_in_progress
                         .insert(ent, crate::AttackInProgress)
                         .expect("Failed to insert AttackInProgress flag");
@@ -138,24 +141,21 @@ impl<'a> System<'a> for AttackSystem {
                             *run_state = crate::RunState::Charging { dir, speed: 1 };
                         }
                     }
-                    crate::AttackTrait::FollowsPath => {
+                    crate::AttackTrait::FollowsPath { step_delay, on_hit } => {
                         if let Some(pos) = positions.get(ent) {
                             let mut path =
                                 rltk::line2d(rltk::LineAlg::Bresenham, intent.loc, pos.as_point());
                             path.pop();
                             path.reverse();
 
-                            // TODO: This should be passed in
-                            let on_hit = crate::AttackType::Area;
                             let projectile = entities.create();
-
                             attack_paths
                                 .insert(
                                     projectile,
                                     crate::AttackPath {
                                         path,
                                         index: 0,
-                                        step_delay: 3,
+                                        step_delay,
                                         cur_delay: 0,
                                         on_hit,
                                     },

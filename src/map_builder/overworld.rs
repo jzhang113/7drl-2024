@@ -27,6 +27,7 @@ impl MapBuilder for OverworldBuilder {
 
     fn spawn_entities(&mut self, ecs: &mut World, spawn_info: &crate::SpawnInfo) {
         add_npc(ecs);
+        spawn::traps::build_arrow_trap(ecs, rltk::Point::new(8, 8));
     }
 
     fn take_snapshot(&mut self) {

@@ -26,6 +26,7 @@ pub enum AttackType {
     Haymaker,
     Ranged { radius: i32 },
     Bolt { radius: i32 },
+    Line { dir: crate::Direction, len: i32 },
 }
 
 #[derive(PartialEq, Copy, Clone)]
@@ -37,7 +38,7 @@ pub enum AttackTrait {
     Invulnerable { duration: u32 },
     LanceCharge { dir: crate::Direction },
     NeedsStamina { amount: i32 },
-    FollowsPath,
+    FollowsPath { step_delay: u32, on_hit: AttackType },
     Stun { duration: u32 },
 }
 
@@ -129,6 +130,7 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
         AttackType::LanceDraw => RangeType::Square { size: 1 },
         AttackType::LanceThrust { .. } => RangeType::Square { size: 1 },
         AttackType::LanceCharge { .. } => RangeType::Single,
+        AttackType::Line { dir, len } => RangeType::Square { size: len },
     }
 }
 
@@ -146,6 +148,7 @@ pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
         AttackType::LanceDraw => RangeType::Single,
         AttackType::LanceThrust { dest, .. } => RangeType::Path { dest },
         AttackType::LanceCharge { .. } => RangeType::Single,
+        AttackType::Line { .. } => RangeType::Single,
     }
 }
 
@@ -153,19 +156,23 @@ pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
         AttackType::Area => 1,
         AttackType::Stun => 2,
-
+        AttackType::Bolt { .. } => 5,
         _ => 0,
     }
 }
 
 pub fn get_active(attack_type: AttackType) -> u32 {
-    1
+    match attack_type {
+        AttackType::Bolt { .. } => 0,
+        _ => 1,
+    }
 }
 
 pub fn get_recovery(attack_type: AttackType) -> u32 {
     match attack_type {
         AttackType::Area => 1,
         AttackType::Ranged { .. } => 1,
+        AttackType::Bolt { .. } => 10,
         _ => 0,
     }
 }
@@ -231,11 +238,18 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         AttackType::Recover => vec![Heal { amount: 2 }],
         AttackType::Haymaker => vec![Damage { amount: 2 }],
         AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
-        AttackType::Bolt { .. } => vec![FollowsPath],
+        AttackType::Bolt { .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::Area,
+        }],
         AttackType::LanceDraw => vec![Damage { amount: 1 }, Stun { duration: 3 }],
         AttackType::LanceThrust { level, .. } => vec![Damage {
             amount: level as i32,
         }],
         AttackType::LanceCharge { dir } => vec![LanceCharge { dir }],
+        AttackType::Line { .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::Stun,
+        }],
     }
 }

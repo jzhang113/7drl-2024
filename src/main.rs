@@ -38,6 +38,7 @@ mod sys_pickup;
 mod sys_projectile;
 mod sys_push;
 mod sys_stun;
+mod sys_trap_ai;
 mod sys_turn;
 mod sys_visibility;
 mod weapon;
@@ -136,6 +137,8 @@ impl State {
         self.ecs.register::<AttackInProgress>();
         self.ecs.register::<BlockAttack>();
         self.ecs.register::<AiState>();
+        self.ecs.register::<TrapAiState>();
+
         self.ecs.register::<Heal>();
         self.ecs.register::<Item>();
         self.ecs.register::<Openable>();
@@ -186,6 +189,7 @@ impl State {
     fn run_systems(&mut self) -> RunState {
         self.tick += 1;
 
+        sys_trap_ai::TrapAiSystem.run_now(&self.ecs);
         sys_ai::AiSystem.run_now(&self.ecs);
         sys_turn::TurnSystem.run_now(&self.ecs);
 
@@ -433,18 +437,7 @@ impl GameState for State {
                                 .insert(*player, get_attack_intent(attack_type, target, None))
                                 .ok();
 
-                            // TODO: hardcoded frames
-                            frames
-                                .insert(
-                                    *player,
-                                    crate::FrameData {
-                                        startup: 5,
-                                        active: 0,
-                                        recovery: 10,
-                                        current: 0,
-                                    },
-                                )
-                                .ok();
+                            frames.insert(*player, get_frame_data(attack_type)).ok();
 
                             // TODO: remove attack_modifier
                             self.attack_modifier = None;

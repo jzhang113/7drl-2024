@@ -135,6 +135,11 @@ pub struct AiState {
 }
 
 #[derive(Component)]
+pub struct TrapAiState {
+    pub status: crate::Behavior,
+}
+
+#[derive(Component)]
 pub struct Heal {
     pub amount: u32,
 }
