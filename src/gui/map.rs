@@ -6,6 +6,7 @@ pub fn draw_all(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
     // map elements
     draw_map(ecs, ctx);
     draw_renderables(ecs, ctx, is_weapon_sheathed);
+    draw_particles(ecs, ctx);
     // draw_blocked_tiles(ecs, ctx);
     draw_attacks_in_progress(ecs, ctx);
 }
@@ -62,42 +63,15 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
     let map = ecs.fetch::<Map>();
     let player = ecs.fetch::<Entity>();
 
-    for (pos, render, particle) in (&positions, &renderables, &particles).join() {
-        if !map.camera.on_screen(pos.as_point()) {
-            continue;
-        }
+    ctx.set_active_console(1);
 
-        let mut fg = render.fg;
-        let mut bg = render.bg;
-
-        if particle.should_fade {
-            let fade_percent = ezing::expo_inout(1.0 - particle.remaining / particle.base);
-            let base_color = bg_color();
-
-            fg = fg.lerp(base_color, fade_percent);
-            bg = bg.lerp(base_color, fade_percent);
-        }
-
-        if map.visible_tiles[map.get_index(pos.x, pos.y)] || SHOW_REND {
-            ctx.set_active_console(0);
-            set_map_tile_with_bg(
-                ctx,
-                &map.camera.origin,
-                &pos.as_point(),
-                fg,
-                bg,
-                render.symbol,
-            );
-            ctx.set_active_console(1);
-        }
-    }
-
-    for (ent, pos, render, mtt, facing) in (
+    for (ent, pos, render, mtt, facing, ()) in (
         &entities,
         &positions,
         &renderables,
         (&multitiles).maybe(),
         (&facings).maybe(),
+        !&particles,
     )
         .join()
     {
@@ -148,6 +122,43 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
     }
 }
 
+pub fn draw_particles(ecs: &World, ctx: &mut Rltk) {
+    let positions = ecs.read_storage::<Position>();
+    let renderables = ecs.read_storage::<Renderable>();
+    let particles = ecs.read_storage::<ParticleLifetime>();
+    let map = ecs.fetch::<Map>();
+
+    for (pos, render, particle) in (&positions, &renderables, &particles).join() {
+        if !map.camera.on_screen(pos.as_point()) {
+            continue;
+        }
+
+        let mut fg = render.fg;
+        let mut bg = render.bg;
+
+        if particle.should_fade {
+            let fade_percent = ezing::expo_inout(1.0 - particle.remaining / particle.base);
+            let base_color = bg_color();
+
+            fg = fg.lerp(base_color, fade_percent);
+            bg = bg.lerp(base_color, fade_percent);
+        }
+
+        if map.visible_tiles[map.get_index(pos.x, pos.y)] || SHOW_REND {
+            ctx.set_active_console(render.zindex as usize);
+            set_map_tile_with_bg(
+                ctx,
+                &map.camera.origin,
+                &pos.as_point(),
+                fg,
+                bg,
+                render.symbol,
+            );
+        }
+    }
+    ctx.set_active_console(1);
+}
+
 pub fn draw_blocked_tiles(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
 
@@ -172,8 +183,8 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
     let attack_paths = ecs.read_storage::<AttackPath>();
     let map = ecs.fetch::<Map>();
 
+    ctx.set_active_console(0);
     for (attack, _) in (&attacks, &in_progress).join() {
-        ctx.set_active_console(0);
         for point in attack_type::each_attack_target(attack.main, attack.loc) {
             if !map.camera.on_screen(point) {
                 continue;
@@ -181,11 +192,9 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
 
             highlight_bg(ctx, &map.camera.origin, &point, RGB::named(rltk::DARKRED));
         }
-        ctx.set_active_console(1);
     }
 
     for attack_path in (&attack_paths).join() {
-        ctx.set_active_console(0);
         for (idx, point) in attack_path.path.iter().enumerate() {
             if !map.camera.on_screen(*point) {
                 continue;
@@ -203,8 +212,8 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
 
             highlight_bg(ctx, &map.camera.origin, point, color);
         }
-        ctx.set_active_console(1);
     }
+    ctx.set_active_console(1);
 }
 
 fn set_map_tile(

@@ -113,6 +113,7 @@ pub fn build_player(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Player".to_string(),
@@ -202,6 +203,7 @@ pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('x'),
             fg: RGB::named(rltk::LIGHT_BLUE),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Pusher".to_string(),
@@ -255,6 +257,7 @@ pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('x'),
             fg: RGB::named(rltk::LIGHT_BLUE),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Crab".to_string(),
@@ -312,6 +315,7 @@ pub fn build_archer(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('y'),
             fg: RGB::named(rltk::LIGHT_GREEN),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Archer".to_string(),
@@ -345,6 +349,7 @@ fn barrel_builder(ecs: &mut World, point: Point) -> EntityBuilder {
             symbol: rltk::to_cp437('#'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Barrel".to_string(),
@@ -374,6 +379,7 @@ pub fn _build_health_pickup(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('+'),
             fg: crate::health_color(),
             bg: crate::bg_color(),
+            zindex: 1,
         })
         .with(crate::Heal { amount: 2 })
         .with(crate::Viewable {
@@ -415,6 +421,7 @@ pub fn build_npc_blacksmith(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('@'),
             fg: RGB::named(rltk::GREEN),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Blacksmith".to_string(),
@@ -433,6 +440,7 @@ pub fn build_npc_shopkeeper(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('@'),
             fg: RGB::named(rltk::RED),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Shopkeeper".to_string(),
@@ -451,6 +459,7 @@ pub fn build_npc_handler(ecs: &mut World, point: Point) -> Entity {
             symbol: rltk::to_cp437('@'),
             fg: RGB::named(rltk::BLUE),
             bg: RGB::named(rltk::BLACK),
+            zindex: 1,
         })
         .with(Viewable {
             name: "Handler".to_string(),

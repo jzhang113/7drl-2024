@@ -31,6 +31,7 @@ pub struct ParticleRequest {
     pub color: rltk::RGB,
     pub symbol: FontCharType,
     pub lifetime: f32,
+    pub zindex: u32,
 }
 
 pub struct ParticleBuilder {
@@ -54,6 +55,7 @@ impl ParticleBuilder {
             lifetime: 300.0,
             position: point,
             symbol: rltk::to_cp437('!'),
+            zindex: 1,
         });
     }
 
@@ -63,6 +65,7 @@ impl ParticleBuilder {
             lifetime: 300.0,
             position: point,
             symbol: rltk::to_cp437('▒'),
+            zindex: 0,
         });
     }
 }
@@ -99,6 +102,7 @@ impl<'a> System<'a> for ParticleSpawnSystem {
                         symbol: request.symbol,
                         fg: request.color,
                         bg: crate::bg_color(),
+                        zindex: request.zindex,
                     },
                 )
                 .expect("Failed to insert Renderable for particle");

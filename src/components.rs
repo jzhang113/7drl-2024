@@ -19,6 +19,7 @@ pub struct Renderable {
     pub symbol: rltk::FontCharType,
     pub fg: RGB,
     pub bg: RGB,
+    pub zindex: u32,
 }
 
 #[derive(Component)]
