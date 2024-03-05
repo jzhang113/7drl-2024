@@ -67,33 +67,17 @@ impl<'a> System<'a> for AttackSystem {
                         //
                     }
                     crate::AttackTrait::Damage { amount } => {
-                        let targets = attack_type::each_attack_target(intent.main, intent.loc);
-                        let mut ents_hit = HashMap::new();
-
-                        for point in targets {
-                            p_builder.make_bg_particle(point);
-                            let point_index = map.point2d_to_index(point);
-                            if let Some(aff_ent) = map.creature_map.get(&point_index) {
-                                // avoid self damage
-                                if *aff_ent == ent {
-                                    continue;
-                                }
-
-                                let hit_locs = ents_hit.entry(aff_ent).or_insert(Vec::new());
-                                hit_locs.push(point);
-                            }
-                        }
-
+                        let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
                         for (ent_hit, hit_locs) in ents_hit {
-                            if invulns.get(*ent_hit).is_some() {
+                            if invulns.get(ent_hit).is_some() {
                                 continue;
                             }
 
-                            if let Some(aff_health) = healths.get_mut(*ent_hit) {
+                            if let Some(aff_health) = healths.get_mut(ent_hit) {
                                 aff_health.current -= amount;
 
-                                if let Some(aff_part) = multis.get_mut(*ent_hit) {
-                                    if let Some(pos) = positions.get(*ent_hit) {
+                                if let Some(aff_part) = multis.get_mut(ent_hit) {
+                                    if let Some(pos) = positions.get(ent_hit) {
                                         for part in aff_part.part_list.iter_mut() {
                                             for part_pos in part.symbol_map.keys() {
                                                 let adj_part_pos = pos.as_point() + *part_pos;
@@ -179,5 +163,34 @@ impl<'a> System<'a> for AttackSystem {
             attacks.remove(*done);
             attacks_in_progress.remove(*done);
         }
+    }
+}
+
+impl AttackSystem {
+    fn get_hit_entities(
+        &mut self,
+        p_builder: &mut crate::ParticleBuilder,
+        map: &crate::Map,
+        ent: Entity,
+        intent: &crate::AttackIntent,
+    ) -> HashMap<specs::Entity, Vec<rltk::Point>> {
+        let targets = attack_type::each_attack_target(intent.main, intent.loc);
+        let mut ents_hit = HashMap::new();
+
+        for point in targets {
+            p_builder.make_bg_particle(point);
+            let point_index = map.point2d_to_index(point);
+            if let Some(aff_ent) = map.creature_map.get(&point_index) {
+                // avoid self damage
+                if *aff_ent == ent {
+                    continue;
+                }
+
+                let hit_locs = ents_hit.entry(*aff_ent).or_insert(Vec::new());
+                hit_locs.push(point);
+            }
+        }
+
+        ents_hit
     }
 }
