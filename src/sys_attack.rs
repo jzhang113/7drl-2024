@@ -22,6 +22,7 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::Stamina>,
         WriteStorage<'a, crate::AttackPath>,
         ReadStorage<'a, crate::FrameData>,
+        WriteStorage<'a, crate::Stunned>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -41,6 +42,7 @@ impl<'a> System<'a> for AttackSystem {
             mut stams,
             mut attack_paths,
             frames,
+            mut stuns,
         ) = data;
         let mut finished_attacks = Vec::new();
 
@@ -95,6 +97,12 @@ impl<'a> System<'a> for AttackSystem {
                                     p_builder.make_hit_particle(pos);
                                 }
                             }
+                        }
+                    }
+                    crate::AttackTrait::Stun { duration } => {
+                        let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
+                        for (ent_hit, _) in ents_hit {
+                            stuns.insert(ent_hit, crate::Stunned { duration }).ok();
                         }
                     }
                     crate::AttackTrait::Movement => {

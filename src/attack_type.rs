@@ -38,6 +38,7 @@ pub enum AttackTrait {
     LanceCharge { dir: crate::Direction },
     NeedsStamina { amount: i32 },
     FollowsPath,
+    Stun { duration: u32 },
 }
 
 pub struct AttackData {
@@ -218,7 +219,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
     match attack_type {
         AttackType::Area => vec![Damage { amount: 2 }],
         AttackType::Melee => vec![Damage { amount: 1 }],
-        AttackType::Stun => vec![Damage { amount: 0 }],
+        AttackType::Stun => vec![Stun { duration: 10 }],
         AttackType::Push => vec![Knockback { amount: 2 }],
         AttackType::Dodge => vec![
             Movement,
@@ -231,7 +232,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         AttackType::Haymaker => vec![Damage { amount: 2 }],
         AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
         AttackType::Bolt { .. } => vec![FollowsPath],
-        AttackType::LanceDraw => vec![Damage { amount: 1 }],
+        AttackType::LanceDraw => vec![Damage { amount: 1 }, Stun { duration: 3 }],
         AttackType::LanceThrust { level, .. } => vec![Damage {
             amount: level as i32,
         }],

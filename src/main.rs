@@ -37,6 +37,7 @@ mod sys_partmove;
 mod sys_pickup;
 mod sys_projectile;
 mod sys_push;
+mod sys_stun;
 mod sys_turn;
 mod sys_visibility;
 mod weapon;
@@ -145,6 +146,7 @@ impl State {
         self.ecs.register::<PushForce>();
         self.ecs.register::<Npc>();
         self.ecs.register::<Invulnerable>();
+        self.ecs.register::<Stunned>();
         self.ecs.register::<MissionTarget>();
     }
 
@@ -191,6 +193,7 @@ impl State {
         sys_movement::MovementSystem.run_now(&self.ecs);
         sys_attack::AttackSystem.run_now(&self.ecs);
         sys_projectile::ProjectileSystem.run_now(&self.ecs);
+        sys_stun::StunSystem.run_now(&self.ecs);
 
         // ensure indexes are correct before handling part movements
         sys_mapindex::MapIndexSystem.run_now(&self.ecs);
@@ -457,7 +460,7 @@ impl GameState for State {
             }
             RunState::Running => {
                 self.run_systems();
-                std::thread::sleep(std::time::Duration::from_millis(50));
+                std::thread::sleep(std::time::Duration::from_millis(1));
                 next_status = *self.ecs.fetch::<RunState>();
             }
             RunState::HitPause { remaining_time } => {

@@ -184,4 +184,9 @@ pub struct Invulnerable {
 }
 
 #[derive(Component)]
+pub struct Stunned {
+    pub duration: u32,
+}
+
+#[derive(Component)]
 pub struct MissionTarget;
