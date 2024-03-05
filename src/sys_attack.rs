@@ -45,10 +45,15 @@ impl<'a> System<'a> for AttackSystem {
         let mut finished_attacks = Vec::new();
 
         for (ent, intent, frame) in (&entities, &mut attacks, &frames).join() {
+            let trait_list = attack_type::get_attack_traits(intent.main);
+
             if frame.current <= frame.startup {
-                attacks_in_progress
-                    .insert(ent, crate::AttackInProgress)
-                    .expect("Failed to insert AttackInProgress flag");
+                if !trait_list.contains(&crate::AttackTrait::FollowsPath) {
+                    attacks_in_progress
+                        .insert(ent, crate::AttackInProgress)
+                        .expect("Failed to insert AttackInProgress flag");
+                }
+
                 continue;
             }
 
@@ -56,7 +61,6 @@ impl<'a> System<'a> for AttackSystem {
                 finished_attacks.push(ent);
             }
 
-            let trait_list = attack_type::get_attack_traits(intent.main);
             for att_trait in trait_list {
                 match att_trait {
                     crate::AttackTrait::Knockback { amount: _ } => {
@@ -150,7 +154,7 @@ impl<'a> System<'a> for AttackSystem {
                             path.reverse();
 
                             // TODO: This should be passed in
-                            let on_hit = crate::AttackType::Melee;
+                            let on_hit = crate::AttackType::Area;
                             let projectile = entities.create();
 
                             attack_paths

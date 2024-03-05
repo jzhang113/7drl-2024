@@ -9,11 +9,12 @@ impl<'a> System<'a> for ProjectileSystem {
         ReadExpect<'a, crate::Map>,
         WriteStorage<'a, crate::AttackPath>,
         WriteStorage<'a, crate::AttackIntent>,
-        WriteStorage<'a, crate::FrameData>
+        WriteStorage<'a, crate::FrameData>,
+        WriteStorage<'a, crate::Schedulable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, map, mut attack_paths, mut attacks, mut frames) = data;
+        let (entities, map, mut attack_paths, mut attacks, mut frames, mut schedulables) = data;
         let mut finished = Vec::new();
 
         for (ent, attack_path) in (&entities, &mut attack_paths).join() {
@@ -50,12 +51,19 @@ impl<'a> System<'a> for ProjectileSystem {
             let frame = crate::FrameData {
                 startup: 0,
                 active: 1,
-                recovery: 0,
+                recovery: 1,
                 current: 0,
+            };
+
+            let sched = crate::Schedulable {
+                current: 0,
+                base: 1,
+                delta: 1,
             };
 
             attacks.insert(*ent, intent).ok();
             frames.insert(*ent, frame).ok();
+            schedulables.insert(*ent, sched).ok();
         }
     }
 }

@@ -421,12 +421,27 @@ impl GameState for State {
                             // we should generally have a target at this point
                             // if we don't have a point, assume its because we won't need one later
                             let target = result.1.unwrap_or(rltk::Point::zero());
-                            crate::attack_type::insert_attack(
-                                &mut self.ecs,
-                                None,
-                                attack_type,
-                                target,
-                            );
+
+                            let mut attacks = self.ecs.write_storage::<AttackIntent>();
+                            let mut frames = self.ecs.write_storage::<FrameData>();
+                            let player = self.ecs.fetch::<Entity>();
+
+                            attacks
+                                .insert(*player, get_attack_intent(attack_type, target, None))
+                                .ok();
+
+                            // TODO: hardcoded frames
+                            frames
+                                .insert(
+                                    *player,
+                                    crate::FrameData {
+                                        startup: 5,
+                                        active: 0,
+                                        recovery: 10,
+                                        current: 0,
+                                    },
+                                )
+                                .ok();
 
                             // TODO: remove attack_modifier
                             self.attack_modifier = None;
