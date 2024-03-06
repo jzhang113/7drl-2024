@@ -1,4 +1,3 @@
-use crate::weapon::WeaponButton;
 use crate::*;
 use rltk::{Point, VirtualKeyCode};
 
@@ -112,14 +111,6 @@ fn try_move_charging(
     RunState::Running
 }
 
-fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
-    if let Some(data) = gs.player_inventory.weapon.get_attack_data(button) {
-        return handle_attack(gs, data);
-    }
-
-    RunState::AwaitingInput
-}
-
 fn handle_attack(gs: &mut State, data: AttackData) -> RunState {
     let mut attacks = gs.ecs.write_storage::<AttackIntent>();
     let mut frames = gs.ecs.write_storage::<FrameData>();
@@ -197,26 +188,23 @@ fn handle_charging(gs: &mut State) -> bool {
             .expect("Failed to insert new movement from player");
         gs.player_charging.0 = false;
 
-        // If the obstacle happens to be a creature, also put in an attack
+        // If the obstacle happens to be a creature, also put in an attack (bump?)
         if let Some(_dest_ent) = map.creature_map.get(&dest_index) {
-            let attack = gs.player_inventory.weapon.invoke_attack(
-                WeaponButton::Light,
-                curr_point,
-                gs.player_charging.1,
-            );
+            let attack = AttackIntent {
+                main: AttackType::Melee,
+                loc: next_point,
+            };
 
-            if let Some((attack, data)) = attack {
-                attacks
-                    .insert(*player, attack)
-                    .expect("Failed to insert new attack from player");
-
-                frames.insert(*player, data.frame_data).ok();
-            }
+            attacks
+                .insert(*player, attack)
+                .expect("Failed to insert new attack from player");
+            frames
+                .insert(*player, get_frame_data(AttackType::Melee))
+                .ok();
 
             return false;
         }
 
-        gs.player_inventory.weapon.reset();
         return false;
     }
 
@@ -237,7 +225,7 @@ fn handle_charging(gs: &mut State) -> bool {
     true
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunState {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     {
         let can_act = gs.ecs.read_storage::<super::CanActFlag>();
         let player = gs.ecs.fetch::<Entity>();
@@ -275,14 +263,6 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) ->
                 VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
                     try_move_charging(gs, crate::Direction::S, gs.player_charging.1)
                 }
-                VirtualKeyCode::Z => {
-                    let next_state = weapon_attack(gs, WeaponButton::Light);
-                    if next_state == RunState::Running {
-                        gs.player_charging.0 = false;
-                    }
-
-                    next_state
-                }
                 VirtualKeyCode::Period => RunState::Running,
                 _ => RunState::AwaitingInput,
             },
@@ -307,7 +287,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) ->
 
         next_state
     } else {
-        handle_keys(gs, ctx, is_weapon_sheathed)
+        handle_keys(gs, ctx)
     }
 }
 
@@ -401,61 +381,36 @@ pub fn end_turn_cleanup(ecs: &mut World) {
     log.dirty = false;
 }
 
-fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunState {
+fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
         None => RunState::AwaitingInput,
         Some(key) => match key {
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
                 let next_state = try_move_player(&mut gs.ecs, -1, 0);
-                if next_state != RunState::AwaitingInput {
-                    gs.player_inventory.weapon.reset();
-                }
                 next_state
             }
             VirtualKeyCode::Right | VirtualKeyCode::Numpad6 | VirtualKeyCode::L => {
                 let next_state = try_move_player(&mut gs.ecs, 1, 0);
-                if next_state != RunState::AwaitingInput {
-                    gs.player_inventory.weapon.reset();
-                }
                 next_state
             }
             VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => {
                 let next_state = try_move_player(&mut gs.ecs, 0, -1);
-                if next_state != RunState::AwaitingInput {
-                    gs.player_inventory.weapon.reset();
-                }
                 next_state
             }
             VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
                 let next_state = try_move_player(&mut gs.ecs, 0, 1);
-                if next_state != RunState::AwaitingInput {
-                    gs.player_inventory.weapon.reset();
-                }
                 next_state
             }
-            VirtualKeyCode::Period => {
-                gs.player_inventory.weapon.reset();
-                RunState::Running
-            }
+            VirtualKeyCode::Period => RunState::Running,
             // VirtualKeyCode::D => {
             //     // TODO: For testing, remove
             //     return RunState::Dead { success: true };
             // }
             // VirtualKeyCode::V => RunState::ViewEnemy { index: 0 },
-            VirtualKeyCode::Z => weapon_attack(gs, WeaponButton::Light),
-            VirtualKeyCode::X => weapon_attack(gs, WeaponButton::Heavy),
-            VirtualKeyCode::C => weapon_attack(gs, WeaponButton::Special),
-            VirtualKeyCode::S => {
-                if gs.player_inventory.weapon.sheathe() {
-                    RunState::Running
-                } else {
-                    RunState::AwaitingInput
-                }
-            }
             VirtualKeyCode::Space => {
                 if !can_dodge(gs) {
                     RunState::AwaitingInput
-                } else if is_weapon_sheathed {
+                } else {
                     let p = {
                         let player = gs.ecs.fetch::<Entity>();
                         let pos = gs.ecs.read_storage::<Position>();
@@ -468,21 +423,6 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunS
                         validity_mode: crate::TargettingValid::Unblocked,
                         show_path: true,
                     };
-                } else if let Some(move_intent) = handle_dodge(&mut gs.ecs) {
-                    {
-                        let mut movements = gs.ecs.write_storage::<MoveIntent>();
-                        let player = gs.ecs.fetch::<Entity>();
-                        movements
-                            .insert(*player, move_intent)
-                            .expect("Failed to insert new movement from player");
-                    }
-                    apply_invuln(&mut gs.ecs);
-                    reduce_stam_for_dodge(&mut gs.ecs);
-                    gs.player_inventory.weapon.reset();
-
-                    RunState::Running
-                } else {
-                    RunState::AwaitingInput
                 }
             }
             VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },

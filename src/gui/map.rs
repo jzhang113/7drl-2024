@@ -2,10 +2,10 @@ use super::consts::*;
 use crate::*;
 use rltk::Algorithm2D;
 
-pub fn draw_all(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
+pub fn draw_all(ecs: &World, ctx: &mut Rltk) {
     // map elements
     draw_map(ecs, ctx);
-    draw_renderables(ecs, ctx, is_weapon_sheathed);
+    draw_renderables(ecs, ctx);
     draw_particles(ecs, ctx);
     // draw_blocked_tiles(ecs, ctx);
     draw_attacks_in_progress(ecs, ctx);
@@ -53,7 +53,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     }
 }
 
-pub fn draw_renderables(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
+pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
     let entities = ecs.entities();
     let positions = ecs.read_storage::<Position>();
     let renderables = ecs.read_storage::<Renderable>();
@@ -76,7 +76,7 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk, is_weapon_sheathed: bool) {
         .join()
     {
         let symbol = if let Some(facing) = facing {
-            if ent != *player || !is_weapon_sheathed {
+            if ent != *player {
                 match facing.direction {
                     Direction::N => rltk::to_cp437('^'),
                     Direction::E => rltk::to_cp437('>'),

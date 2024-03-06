@@ -370,16 +370,8 @@ impl GameState for State {
             next_status = *self.ecs.fetch::<RunState>();
         }
 
-        let is_weapon_sheathed = {
-            &self
-                .player_inventory
-                .weapon
-                .get_attack_data(weapon::WeaponButton::Light)
-                .map_or(false, |data| data.name == "Draw Atk")
-        };
-
         // draw map + gui
-        gui::map::draw_all(&self.ecs, ctx, *is_weapon_sheathed);
+        gui::map::draw_all(&self.ecs, ctx);
 
         // non-map elements
         gui::sidebar::draw_sidebar(&self, ctx);
@@ -388,7 +380,7 @@ impl GameState for State {
 
         match next_status {
             RunState::AwaitingInput => {
-                next_status = player::player_input(self, ctx, *is_weapon_sheathed);
+                next_status = player::player_input(self, ctx);
 
                 if next_status == RunState::Running {
                     player::end_turn_cleanup(&mut self.ecs);
