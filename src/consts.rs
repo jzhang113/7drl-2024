@@ -1,0 +1,1 @@
+pub const WALL_HIT_STUN_DURATION: u32 = 10;

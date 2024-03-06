@@ -43,6 +43,8 @@ mod sys_turn;
 mod sys_visibility;
 mod weapon;
 
+pub mod consts;
+
 pub use attack_type::*;
 pub use camera::*;
 pub use colors::*;

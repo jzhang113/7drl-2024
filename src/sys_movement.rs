@@ -56,7 +56,7 @@ impl<'a> System<'a> for MovementSystem {
 
             // check for the player at the destination, since we should already be pathing around other entities
             if let Some(multi) = multi {
-                attack_pos = check_for_entity_at(ent, &mut *map, multi, new_pos);
+                attack_pos = check_for_entity_at(ent, &mut map, multi, new_pos);
             }
 
             match attack_pos {

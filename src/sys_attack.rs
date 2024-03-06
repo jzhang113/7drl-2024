@@ -68,8 +68,48 @@ impl<'a> System<'a> for AttackSystem {
 
             for att_trait in trait_list {
                 match att_trait {
-                    crate::AttackTrait::Knockback { amount: _ } => {
-                        //
+                    crate::AttackTrait::Knockback { amount, dir } => {
+                        let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
+                        let offset = dir.to_point();
+
+                        for (ent_hit, _) in ents_hit {
+                            let ent_pos = positions.get(ent_hit).unwrap();
+
+                            // check for collision
+                            let mut next_x = ent_pos.x;
+                            let mut next_y = ent_pos.y;
+                            for _ in 0..amount {
+                                next_x += offset.x;
+                                next_y += offset.y;
+
+                                // if we collide into something, rewind the attempted movement
+                                // and insert a stun
+                                if !map.is_tile_valid(next_x, next_y) {
+                                    next_x -= offset.x;
+                                    next_y -= offset.y;
+
+                                    stuns
+                                        .insert(
+                                            ent_hit,
+                                            crate::Stunned {
+                                                duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                            },
+                                        )
+                                        .ok();
+                                    break;
+                                }
+                            }
+
+                            movements
+                                .insert(
+                                    ent_hit,
+                                    crate::MoveIntent {
+                                        loc: rltk::Point::new(next_x, next_y),
+                                        force_facing: None,
+                                    },
+                                )
+                                .ok();
+                        }
                     }
                     crate::AttackTrait::Damage { amount } => {
                         let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
