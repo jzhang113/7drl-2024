@@ -18,14 +18,14 @@ enum LanceState {
 }
 
 #[derive(Copy, Clone)]
-enum LanceAttack {
+pub enum LanceAttack {
     DrawAttack,
     Thrust { level: u8 },
     Charge,
     Sweep,
 }
 
-fn get_attack_data(attack: LanceAttack) -> AttackData {
+pub fn get_attack_data(attack: LanceAttack) -> AttackData {
     let needs_target = match attack {
         LanceAttack::Sweep => true,
         LanceAttack::DrawAttack => true,

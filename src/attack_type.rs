@@ -1,7 +1,6 @@
 use crate::{AttackIntent, FrameData, RangeType};
 use derivative::Derivative;
 use rltk::Point;
-use specs::prelude::*;
 use std::collections::HashMap;
 
 lazy_static! {
@@ -43,6 +42,7 @@ pub enum AttackTrait {
     Stun { duration: u32 },
 }
 
+#[derive(Clone)]
 pub struct AttackData {
     pub needs_target: bool,
     pub needs_path: bool,
@@ -74,25 +74,6 @@ pub fn is_attack_valid(attack_type: AttackType, from_point: Point, target: Point
 pub fn each_attack_target(attack_type: AttackType, from_point: Point) -> Vec<Point> {
     let shape = get_attack_shape(attack_type);
     crate::range_type::resolve_range_at(&shape, from_point)
-}
-
-pub fn insert_attack(
-    ecs: &mut World,
-    source: Option<&Entity>,
-    attack_type: AttackType,
-    loc: Point,
-) {
-    let mut attacks = ecs.write_storage::<AttackIntent>();
-    let mut frames = ecs.write_storage::<FrameData>();
-    let player = ecs.fetch::<Entity>();
-    let attack_source = source.unwrap_or(&player);
-
-    attacks
-        .insert(*attack_source, get_attack_intent(attack_type, loc, None))
-        .ok();
-    frames
-        .insert(*attack_source, get_frame_data(attack_type))
-        .ok();
 }
 
 // convert an attack into an intent that can be executed by the event system

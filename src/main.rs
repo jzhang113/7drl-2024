@@ -98,6 +98,9 @@ pub enum RunState {
         dir: crate::Direction,
         speed: u8,
     },
+    AbilitySelect {
+        index: usize,
+    },
 }
 
 pub struct State {
@@ -110,6 +113,7 @@ pub struct State {
     selected_quest: Option<quest::quest::Quest>,
     player_inventory: inventory::Inventory,
     player_charging: (bool, crate::Direction, u8, bool),
+    player_abilities: Vec<AttackData>,
     max_cleared_level: i32,
 }
 
@@ -552,6 +556,16 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::AbilitySelect { index } => {
+                if self.player_abilities.is_empty() {
+                    let mut log = self.ecs.fetch_mut::<GameLog>();
+                    log.add("You know no abilities");
+                    next_status = RunState::Running;
+                } else {
+                    gui::ability_select::draw_abilities(self, ctx, index);
+                    next_status = player::ability_select_input(self, ctx, index);
+                }
+            }
         }
 
         let mut status_writer = self.ecs.write_resource::<RunState>();
@@ -597,10 +611,22 @@ fn main() -> rltk::BError {
         selected_quest: None,
         player_inventory: inventory::Inventory::new(),
         player_charging: (false, crate::Direction::N, 0, false),
+        player_abilities: pabb(),
         max_cleared_level: 0,
     };
 
     gs.new_game();
 
     rltk::main_loop(context, gs)
+}
+
+use crate::weapon::lance::LanceAttack;
+fn pabb() -> Vec<AttackData> {
+    let mut attacks = Vec::new();
+    attacks.push(crate::weapon::lance::get_attack_data(
+        LanceAttack::DrawAttack,
+    ));
+    attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Sweep));
+
+    attacks
 }

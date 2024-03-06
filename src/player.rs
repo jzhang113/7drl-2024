@@ -113,6 +113,14 @@ fn try_move_charging(
 }
 
 fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
+    if let Some(data) = gs.player_inventory.weapon.get_attack_data(button) {
+        return handle_attack(gs, data);
+    }
+
+    RunState::AwaitingInput
+}
+
+fn handle_attack(gs: &mut State, data: AttackData) -> RunState {
     let mut attacks = gs.ecs.write_storage::<AttackIntent>();
     let mut frames = gs.ecs.write_storage::<FrameData>();
     let positions = gs.ecs.read_storage::<Position>();
@@ -124,39 +132,32 @@ fn weapon_attack(gs: &mut State, button: WeaponButton) -> RunState {
     let facing = facings.get(*player).unwrap();
     let stamina = stams.get_mut(*player).unwrap();
 
-    if let Some(data) = gs.player_inventory.weapon.get_attack_data(button) {
-        if data.stam_cost > stamina.current {
-            return RunState::AwaitingInput;
-        }
-
-        if data.needs_target {
-            return RunState::Targetting {
-                attack_type: data.attack_type,
-                cursor_point: pos.as_point(),
-                validity_mode: TargettingValid::All,
-                show_path: data.needs_path,
-            };
-        }
-
-        stamina.current -= data.stam_cost;
-        stamina.recover = false;
-
-        if let Some((attack, data)) =
-            gs.player_inventory
-                .weapon
-                .invoke_attack(button, pos.as_point(), facing.direction)
-        {
-            attacks
-                .insert(*player, attack)
-                .expect("Failed to insert new attack from player");
-
-            frames.insert(*player, data.frame_data).ok();
-
-            return RunState::Running;
-        }
+    if data.stam_cost > stamina.current {
+        return RunState::AwaitingInput;
     }
 
-    RunState::AwaitingInput
+    if data.needs_target {
+        return RunState::Targetting {
+            attack_type: data.attack_type,
+            cursor_point: pos.as_point(),
+            validity_mode: TargettingValid::All,
+            show_path: data.needs_path,
+        };
+    }
+
+    stamina.current -= data.stam_cost;
+    stamina.recover = false;
+
+    let intent = AttackIntent {
+        main: data.attack_type,
+        loc: pos.as_point(),
+    };
+    attacks
+        .insert(*player, intent)
+        .expect("Failed to insert new attack from player");
+    frames.insert(*player, data.frame_data).ok();
+
+    RunState::Running
 }
 
 fn handle_charging(gs: &mut State) -> bool {
@@ -484,6 +485,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk, is_weapon_sheathed: bool) -> RunS
                     RunState::AwaitingInput
                 }
             }
+            VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },
             _ => RunState::AwaitingInput,
         },
     }
@@ -755,6 +757,43 @@ pub fn mission_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> Run
     }
 
     RunState::MissionSelect {
+        index: new_index % max_index,
+    }
+}
+
+pub fn ability_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> RunState {
+    let mut new_index = index;
+    let max_index = gs.player_abilities.len();
+
+    match ctx.key {
+        None => {}
+        Some(key) => match key {
+            VirtualKeyCode::Up | VirtualKeyCode::Numpad8 => {
+                if new_index > 0 {
+                    new_index -= 1;
+                } else {
+                    new_index += max_index;
+                }
+            }
+            VirtualKeyCode::Down | VirtualKeyCode::Numpad2 => {
+                new_index += 1;
+            }
+            VirtualKeyCode::Escape => {
+                return RunState::AwaitingInput;
+            }
+            VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
+                return handle_attack(gs, gs.player_abilities[index].clone())
+            }
+            _ => {
+                let selection = rltk::letter_to_option(key) as usize;
+                if selection < max_index {
+                    return handle_attack(gs, gs.player_abilities[selection].clone());
+                }
+            }
+        },
+    }
+
+    RunState::AbilitySelect {
         index: new_index % max_index,
     }
 }

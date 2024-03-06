@@ -1,3 +1,4 @@
+pub mod ability_select;
 pub mod consts;
 pub mod controls;
 pub mod frame_data;
