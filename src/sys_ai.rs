@@ -276,6 +276,7 @@ impl AiSystem {
                 intent: MoveIntent {
                     loc: data.map.index_to_point2d(chosen_exit),
                     force_facing: None,
+                    delay: 0,
                 },
             };
         } else {
@@ -300,6 +301,7 @@ impl AiSystem {
                             intent: MoveIntent {
                                 loc: next_pos,
                                 force_facing: None,
+                                delay: 0,
                             },
                         };
                     }
@@ -319,6 +321,7 @@ impl AiSystem {
                         intent: MoveIntent {
                             loc: next_point,
                             force_facing: None,
+                            delay: 0,
                         },
                     };
                 }
@@ -335,6 +338,7 @@ impl AiSystem {
                     intent: MoveIntent {
                         loc: next_pos,
                         force_facing: None,
+                        delay: 0,
                     },
                 };
             }

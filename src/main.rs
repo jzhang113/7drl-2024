@@ -196,8 +196,8 @@ impl State {
         sys_turn::TurnSystem.run_now(&self.ecs);
 
         sys_frame_data::FrameDataSystem.run_now(&self.ecs);
-        sys_movement::MovementSystem.run_now(&self.ecs);
         sys_attack::AttackSystem.run_now(&self.ecs);
+        sys_movement::MovementSystem.run_now(&self.ecs);
         sys_projectile::ProjectileSystem.run_now(&self.ecs);
         sys_stun::StunSystem.run_now(&self.ecs);
 

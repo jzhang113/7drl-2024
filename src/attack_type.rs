@@ -34,7 +34,7 @@ pub enum AttackType {
 pub enum AttackTrait {
     Damage { amount: i32 },
     Knockback { amount: i32 },
-    Movement,
+    Movement { delay: u32 },
     Heal { amount: i32 },
     Invulnerable { duration: u32 },
     LanceCharge { dir: crate::Direction },
@@ -233,7 +233,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         AttackType::Stun => vec![Stun { duration: 10 }],
         AttackType::Push => vec![Knockback { amount: 2 }],
         AttackType::Dodge => vec![
-            Movement,
+            Movement { delay: 0 },
             Invulnerable { duration: 6 },
             NeedsStamina {
                 amount: crate::player::DODGE_STAM_REQ,
@@ -255,6 +255,10 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
             step_delay: 3,
             on_hit: AttackType::Stun,
         }],
-        AttackType::Advancing => vec![Damage { amount: 1 }, Knockback { amount: 2 }],
+        AttackType::Advancing => vec![
+            Damage { amount: 1 },
+            Knockback { amount: 2 },
+            Movement { delay: 1 },
+        ],
     }
 }

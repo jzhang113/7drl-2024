@@ -34,6 +34,7 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
             let new_move = MoveIntent {
                 loc: Point::new(new_x, new_y),
                 force_facing: None,
+                delay: 0,
             };
             movements
                 .insert(*player, new_move)
@@ -188,6 +189,7 @@ fn handle_charging(gs: &mut State) -> bool {
         let new_move = MoveIntent {
             loc: curr_point,
             force_facing: None,
+            delay: 0,
         };
         movements
             .insert(*player, new_move)
@@ -220,6 +222,7 @@ fn handle_charging(gs: &mut State) -> bool {
     let new_move = MoveIntent {
         loc: rltk::Point::new(player_x, player_y),
         force_facing: None,
+        delay: 0,
     };
     movements
         .insert(*player, new_move)
@@ -348,6 +351,7 @@ fn handle_dodge(ecs: &mut World) -> Option<MoveIntent> {
     Some(MoveIntent {
         loc: rltk::Point::new(player_x, player_y),
         force_facing: Some(player_facing),
+        delay: 0,
     })
 }
 

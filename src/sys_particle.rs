@@ -26,8 +26,14 @@ fn update_lifetimes(ecs: &mut World, ctx: &Rltk) -> Vec<Entity> {
 }
 
 #[derive(PartialEq, Copy, Clone)]
+pub enum ParticleTarget {
+    PointTarget(Point),
+    EntityTarget(Entity),
+}
+
+#[derive(PartialEq, Copy, Clone)]
 pub struct ParticleRequest {
-    pub position: Point,
+    pub position: ParticleTarget,
     pub color: rltk::RGB,
     pub symbol: FontCharType,
     pub lifetime: f32,
@@ -49,11 +55,11 @@ impl ParticleBuilder {
         self.requests.push(request);
     }
 
-    pub fn make_hit_particle(&mut self, point: Point) {
+    pub fn make_hit_particle(&mut self, entity: Entity) {
         self.make_particle(crate::ParticleRequest {
             color: crate::particle_hit_color(),
             lifetime: 300.0,
-            position: point,
+            position: ParticleTarget::EntityTarget(entity),
             symbol: rltk::to_cp437('!'),
             zindex: 1,
         });
@@ -63,7 +69,7 @@ impl ParticleBuilder {
         self.make_particle(crate::ParticleRequest {
             color: crate::particle_bg_color(),
             lifetime: 300.0,
-            position: point,
+            position: ParticleTarget::PointTarget(point),
             symbol: rltk::to_cp437('▒'),
             zindex: 0,
         });
@@ -86,14 +92,14 @@ impl<'a> System<'a> for ParticleSpawnSystem {
 
         for request in builder.requests.drain(..) {
             let particle = entities.create();
+
+            let pt = match request.position {
+                ParticleTarget::PointTarget(p) => p,
+                ParticleTarget::EntityTarget(e) => positions.get(e).unwrap().as_point(),
+            };
+
             positions
-                .insert(
-                    particle,
-                    Position {
-                        x: request.position.x,
-                        y: request.position.y,
-                    },
-                )
+                .insert(particle, Position { x: pt.x, y: pt.y })
                 .expect("Failed to insert Position for particle");
             renderables
                 .insert(

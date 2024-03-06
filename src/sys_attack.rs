@@ -109,6 +109,7 @@ impl<'a> System<'a> for AttackSystem {
                                     crate::MoveIntent {
                                         loc: rltk::Point::new(next_x, next_y),
                                         force_facing: None,
+                                        delay: 0,
                                     },
                                 )
                                 .ok();
@@ -139,9 +140,7 @@ impl<'a> System<'a> for AttackSystem {
                                     }
                                 }
 
-                                for pos in hit_locs {
-                                    p_builder.make_hit_particle(pos);
-                                }
+                                p_builder.make_hit_particle(ent_hit);
                             }
                         }
                     }
@@ -151,7 +150,7 @@ impl<'a> System<'a> for AttackSystem {
                             stuns.insert(ent_hit, crate::Stunned { duration }).ok();
                         }
                     }
-                    crate::AttackTrait::Movement => {
+                    crate::AttackTrait::Movement { delay } => {
                         let targets = attack_type::each_attack_target(intent.main, intent.loc);
                         assert!(targets.len() == 1);
 
@@ -161,6 +160,7 @@ impl<'a> System<'a> for AttackSystem {
                                 crate::MoveIntent {
                                     loc: targets[0],
                                     force_facing: None,
+                                    delay,
                                 },
                             )
                             .ok();

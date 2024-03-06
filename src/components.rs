@@ -91,6 +91,7 @@ pub struct AttackIntent {
 pub struct MoveIntent {
     pub loc: rltk::Point,
     pub force_facing: Option<crate::Direction>,
+    pub delay: u32,
 }
 
 #[derive(Component)]

@@ -29,11 +29,12 @@ impl<'a> System<'a> for MovementSystem {
             mut viewsheds,
             mut facings,
         ) = data;
+        let mut finished_move = Vec::new();
 
         for (ent, pos, movement, moveset, multi, viewshed, facing) in (
             &entities,
             &mut positions,
-            &movements,
+            &mut movements,
             (&movesets).maybe(),
             (&multis).maybe(),
             (&mut viewsheds).maybe(),
@@ -41,6 +42,12 @@ impl<'a> System<'a> for MovementSystem {
         )
             .join()
         {
+            dbg!(movement.delay);
+            if movement.delay > 0 {
+                movement.delay -= 1;
+                continue;
+            }
+
             let new_pos = movement.loc;
             let mut attack_pos = None;
 
@@ -90,9 +97,13 @@ impl<'a> System<'a> for MovementSystem {
                     }
                 }
             }
+
+            finished_move.push(ent);
         }
 
-        movements.clear();
+        for done in finished_move.iter() {
+            movements.remove(*done);
+        }
     }
 }
 
