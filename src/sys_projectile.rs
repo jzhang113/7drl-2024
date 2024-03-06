@@ -31,7 +31,10 @@ impl<'a> System<'a> for ProjectileSystem {
 
             let point = attack_path.path[attack_path.index];
             let point_index = map.point2d_to_index(point);
-            if let Some(aff_ent) = map.creature_map.get(&point_index) {
+
+            if !map.is_tile_valid(point.x, point.y) {
+                finished.push((ent, attack_path.on_hit, point));
+            } else if let Some(aff_ent) = map.creature_map.get(&point_index) {
                 // Be careful around self damage with multi-tile
                 // We can't check *aff_ent != ent, since ent refers
                 // to the projectile here

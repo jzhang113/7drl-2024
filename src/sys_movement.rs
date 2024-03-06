@@ -42,7 +42,6 @@ impl<'a> System<'a> for MovementSystem {
         )
             .join()
         {
-            dbg!(movement.delay);
             if movement.delay > 0 {
                 movement.delay -= 1;
                 continue;
