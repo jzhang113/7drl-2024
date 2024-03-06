@@ -68,12 +68,15 @@ impl<'a> System<'a> for AttackSystem {
 
             for att_trait in trait_list {
                 match att_trait {
-                    crate::AttackTrait::Knockback { amount, dir } => {
+                    crate::AttackTrait::Knockback { amount } => {
                         let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
-                        let offset = dir.to_point();
-
                         for (ent_hit, _) in ents_hit {
-                            let ent_pos = positions.get(ent_hit).unwrap();
+                            let src_pos = positions.get(ent).unwrap().as_point();
+                            let ent_pos = positions.get(ent_hit).unwrap().as_point();
+
+                            let offset = crate::Direction::get_direction_towards(src_pos, ent_pos)
+                                .unwrap()
+                                .to_point();
 
                             // check for collision
                             let mut next_x = ent_pos.x;

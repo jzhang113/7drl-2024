@@ -9,6 +9,7 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let renderables = ecs.read_storage::<Renderable>();
     let viewables = ecs.read_storage::<Viewable>();
     let positions = ecs.read_storage::<Position>();
+    let schedulables = ecs.read_storage::<Schedulable>();
 
     let mouse_point = ctx.mouse_point();
     let adjusted_point = mouse_point - rltk::Point::new(SIDE_W + 1, 1) + map.camera.origin;
@@ -30,6 +31,9 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             let vv = viewables.get(*ent).unwrap();
 
             tooltip.insert(vv.name.to_string());
+
+            let ss = schedulables.get(*ent).unwrap();
+            tooltip.insert(ss.current.to_string());
         }
     }
 

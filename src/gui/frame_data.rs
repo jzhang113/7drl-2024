@@ -5,8 +5,8 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
     let frames = gs.ecs.read_storage::<FrameData>();
     let players = gs.ecs.read_storage::<Player>();
 
-    let x_start = (SIDE_X + SIDE_W + 1) as u32;
-    let y_start = SIDE_H as u32;
+    let x_start = (SIDE_X + SIDE_W + 1 + 29) as u32;
+    let y_start = SIDE_H as u32 - 13;
 
     ctx.print(x_start, y_start - 1, gs.tick);
 

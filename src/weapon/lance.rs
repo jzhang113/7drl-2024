@@ -28,6 +28,7 @@ enum LanceAttack {
 fn get_attack_data(attack: LanceAttack) -> AttackData {
     let needs_target = match attack {
         LanceAttack::Sweep => true,
+        LanceAttack::DrawAttack => true,
         _ => false,
     };
 
@@ -65,7 +66,7 @@ fn get_attack_data(attack: LanceAttack) -> AttackData {
 
     let attack_type = match attack {
         LanceAttack::Sweep => AttackType::Bolt { radius: 6 },
-        LanceAttack::DrawAttack => AttackType::LanceDraw,
+        LanceAttack::DrawAttack => AttackType::Advancing,
         LanceAttack::Thrust { level } => AttackType::Melee,
         LanceAttack::Charge => AttackType::Melee,
     };
@@ -111,7 +112,7 @@ fn get_attack_intent(
 
     match attack {
         LanceAttack::DrawAttack => AttackIntent {
-            main: AttackType::LanceDraw,
+            main: AttackType::Advancing,
             loc: source_point,
         },
         LanceAttack::Thrust { level } => AttackIntent {

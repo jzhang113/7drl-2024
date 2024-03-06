@@ -27,9 +27,10 @@ pub enum AttackType {
     Ranged { radius: i32 },
     Bolt { radius: i32 },
     Line { radius: i32 },
+    Advancing,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum AttackTrait {
     Damage { amount: i32 },
     Knockback { amount: i32 },
@@ -113,7 +114,7 @@ pub fn get_frame_data(attack_type: AttackType) -> FrameData {
         recovery: get_recovery(attack_type),
         current: 0,
         cancelled: false,
-        linger_time: 10,
+        linger_time: crate::consts::FRAME_LINGER_TIME,
     }
 }
 
@@ -132,6 +133,7 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
         AttackType::LanceThrust { .. } => RangeType::Square { size: 1 },
         AttackType::LanceCharge { .. } => RangeType::Single,
         AttackType::Line { radius } => RangeType::Square { size: radius },
+        AttackType::Advancing { .. } => RangeType::Diamond { size: 1 },
     }
 }
 
@@ -150,6 +152,7 @@ pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
         AttackType::LanceThrust { dest, .. } => RangeType::Path { dest },
         AttackType::LanceCharge { .. } => RangeType::Single,
         AttackType::Line { .. } => RangeType::Single,
+        AttackType::Advancing => RangeType::Single,
     }
 }
 
@@ -252,5 +255,6 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
             step_delay: 3,
             on_hit: AttackType::Stun,
         }],
+        AttackType::Advancing => vec![Damage { amount: 1 }, Knockback { amount: 2 }],
     }
 }

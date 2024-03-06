@@ -1,1 +1,2 @@
 pub const WALL_HIT_STUN_DURATION: u32 = 10;
+pub const FRAME_LINGER_TIME: i32 = 10;
