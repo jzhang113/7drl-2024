@@ -87,6 +87,8 @@ fn get_attack_data(attack: LanceAttack) -> AttackData {
         active: 1,
         recovery: 15,
         current: 0,
+        cancelled: false,
+        linger_time: 10,
     };
 
     AttackData {
@@ -110,7 +112,6 @@ fn get_attack_intent(
     match attack {
         LanceAttack::DrawAttack => AttackIntent {
             main: AttackType::LanceDraw,
-            modifier: None,
             loc: source_point,
         },
         LanceAttack::Thrust { level } => AttackIntent {
@@ -118,17 +119,14 @@ fn get_attack_intent(
                 level,
                 dest: crate::direction::Direction::point_in_direction(source_point, dir),
             },
-            modifier: None,
             loc: from_point,
         },
         LanceAttack::Charge => AttackIntent {
             main: AttackType::LanceCharge { dir },
-            modifier: None,
             loc: from_point,
         },
         LanceAttack::Sweep => AttackIntent {
             main: AttackType::Bolt { radius: 4 },
-            modifier: None,
             loc: from_point,
         },
     }

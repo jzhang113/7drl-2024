@@ -14,11 +14,18 @@ impl<'a> System<'a> for FrameDataSystem {
         let mut finished = Vec::new();
 
         for (ent, frame, sched) in (&entities, &mut frames, &mut schedulables).join() {
-            frame.current += 1;
-            sched.current += 1;
+            if !frame.cancelled {
+                frame.current += 1;
+                sched.current += 1;
 
-            if frame.current >= frame.startup + frame.active + frame.recovery {
-                finished.push(ent);
+                if frame.current >= frame.startup + frame.active + frame.recovery {
+                    finished.push(ent);
+                }
+            } else {
+                frame.linger_time -= 1;
+                if frame.linger_time <= 0 {
+                    finished.push(ent);
+                }
             }
         }
 

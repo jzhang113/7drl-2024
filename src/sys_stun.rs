@@ -9,10 +9,18 @@ impl<'a> System<'a> for StunSystem {
         WriteStorage<'a, crate::Schedulable>,
         WriteStorage<'a, crate::AttackIntent>,
         WriteStorage<'a, crate::AttackInProgress>,
+        WriteStorage<'a, crate::FrameData>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut stuns, mut schedulables, mut attacks, mut attacks_in_progress) = data;
+        let (
+            entities,
+            mut stuns,
+            mut schedulables,
+            mut attacks,
+            mut attacks_in_progress,
+            mut frames,
+        ) = data;
         let mut removal = Vec::new();
 
         for (ent, stun, sched) in (&entities, &stuns, &mut schedulables).join() {
@@ -29,6 +37,10 @@ impl<'a> System<'a> for StunSystem {
             stuns.remove(*done);
             attacks.remove(*done);
             attacks_in_progress.remove(*done);
+
+            if let Some(frame) = frames.get_mut(*done) {
+                frame.cancelled = true;
+            }
         }
     }
 }

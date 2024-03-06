@@ -13,24 +13,36 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
     for (_, frame) in (&players, &frames).join() {
         ctx.set_active_console(0);
         for x in 0..frame.startup {
-            ctx.set(x_start + x, y_start, frame_startup_color(), bg_color(), 219);
+            let clr = if frame.cancelled {
+                particle_hit_color()
+            } else {
+                frame_startup_color()
+            };
+
+            ctx.set(x_start + x, y_start, clr, bg_color(), 219);
         }
 
         for x in 0..frame.active {
-            ctx.set(
-                x_start + x + frame.startup,
-                y_start,
-                frame_active_color(),
-                bg_color(),
-                219,
-            );
+            let clr = if frame.cancelled {
+                particle_hit_color()
+            } else {
+                frame_active_color()
+            };
+
+            ctx.set(x_start + x + frame.startup, y_start, clr, bg_color(), 219);
         }
 
         for x in 0..frame.recovery {
+            let clr = if frame.cancelled {
+                particle_hit_color()
+            } else {
+                frame_recovery_color()
+            };
+
             ctx.set(
                 x_start + x + frame.startup + frame.active,
                 y_start,
-                frame_recovery_color(),
+                clr,
                 bg_color(),
                 219,
             );
@@ -44,5 +56,13 @@ pub fn draw_frames(gs: &State, ctx: &mut Rltk) {
             bg_color(),
             223,
         );
+
+        if frame.cancelled {
+            if frame.current < frame.startup + frame.active {
+                ctx.print(x_start, y_start + 1, "Interrupted!");
+            } else {
+                ctx.print(x_start, y_start + 1, "Punished!");
+            }
+        }
     }
 }

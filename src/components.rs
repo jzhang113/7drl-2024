@@ -77,12 +77,13 @@ pub struct FrameData {
     pub active: u32,
     pub recovery: u32,
     pub current: u32,
+    pub cancelled: bool,
+    pub linger_time: i32,
 }
 
 #[derive(Component, Copy, Clone)]
 pub struct AttackIntent {
     pub main: crate::AttackType,
-    pub modifier: Option<crate::AttackType>,
     pub loc: Point,
 }
 

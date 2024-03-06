@@ -44,7 +44,6 @@ impl<'a> System<'a> for ProjectileSystem {
 
             let intent = crate::AttackIntent {
                 main: *next_attack,
-                modifier: None,
                 loc: *impact_loc,
             };
 
@@ -53,6 +52,8 @@ impl<'a> System<'a> for ProjectileSystem {
                 active: 1,
                 recovery: 1,
                 current: 0,
+                cancelled: false,
+                linger_time: 0,
             };
 
             let sched = crate::Schedulable {

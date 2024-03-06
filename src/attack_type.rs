@@ -26,7 +26,7 @@ pub enum AttackType {
     Haymaker,
     Ranged { radius: i32 },
     Bolt { radius: i32 },
-    Line { dir: crate::Direction, len: i32 },
+    Line { radius: i32 },
 }
 
 #[derive(PartialEq, Copy, Clone)]
@@ -102,7 +102,6 @@ pub fn get_attack_intent(
 ) -> AttackIntent {
     AttackIntent {
         main: attack_type,
-        modifier: attack_modifier,
         loc,
     }
 }
@@ -113,6 +112,8 @@ pub fn get_frame_data(attack_type: AttackType) -> FrameData {
         active: get_active(attack_type),
         recovery: get_recovery(attack_type),
         current: 0,
+        cancelled: false,
+        linger_time: 10,
     }
 }
 
@@ -130,7 +131,7 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
         AttackType::LanceDraw => RangeType::Square { size: 1 },
         AttackType::LanceThrust { .. } => RangeType::Square { size: 1 },
         AttackType::LanceCharge { .. } => RangeType::Single,
-        AttackType::Line { dir, len } => RangeType::Square { size: len },
+        AttackType::Line { radius } => RangeType::Square { size: radius },
     }
 }
 
@@ -157,7 +158,7 @@ pub fn get_startup(attack_type: AttackType) -> u32 {
         AttackType::Area => 1,
         AttackType::Stun => 2,
         AttackType::Bolt { .. } => 5,
-        _ => 0,
+        _ => 10,
     }
 }
 
@@ -173,7 +174,7 @@ pub fn get_recovery(attack_type: AttackType) -> u32 {
         AttackType::Area => 1,
         AttackType::Ranged { .. } => 1,
         AttackType::Bolt { .. } => 10,
-        _ => 0,
+        _ => 10,
     }
 }
 
