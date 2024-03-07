@@ -43,7 +43,7 @@ pub fn resolve_range_at(range: &RangeType, center: Point) -> Vec<Point> {
                 targets.push(Point::new(x, center.y + size));
             }
 
-            for y in center.y - size..=center.y + size {
+            for y in center.y - size + 1..center.y + size {
                 targets.push(Point::new(center.x - size, y));
                 targets.push(Point::new(center.x + size, y));
             }
