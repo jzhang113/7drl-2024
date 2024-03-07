@@ -5,6 +5,8 @@ pub enum RangeType {
     Empty,
     Single,
     Square { size: i32 },
+    SquareInclusive { size: i32 },
+    Ring { size: i32 },
     Diamond { size: i32 },
     Path { dest: Point },
     Ray { dir: crate::Direction, len: i32 },
@@ -26,6 +28,24 @@ pub fn resolve_range_at(range: &RangeType, center: Point) -> Vec<Point> {
                         targets.push(Point::new(x, y));
                     }
                 }
+            }
+        }
+        RangeType::SquareInclusive { size } => {
+            for x in center.x - size..=center.x + size {
+                for y in center.y - size..=center.y + size {
+                    targets.push(Point::new(x, y));
+                }
+            }
+        }
+        RangeType::Ring { size } => {
+            for x in center.x - size..=center.x + size {
+                targets.push(Point::new(x, center.y - size));
+                targets.push(Point::new(x, center.y + size));
+            }
+
+            for y in center.y - size..=center.y + size {
+                targets.push(Point::new(center.x - size, y));
+                targets.push(Point::new(center.x + size, y));
             }
         }
         RangeType::Diamond { size } => {

@@ -27,12 +27,15 @@ pub enum AttackType {
     Bolt { radius: i32 },
     Line { radius: i32 },
     Advancing,
+    Barrier,
+    Hook { radius: i32 },
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum AttackTrait {
     Damage { amount: i32 },
     Knockback { amount: i32 },
+    Pull { amount: i32, pass_over: bool },
     Movement { delay: u32 },
     Heal { amount: i32 },
     Invulnerable { duration: u32 },
@@ -40,6 +43,7 @@ pub enum AttackTrait {
     NeedsStamina { amount: i32 },
     FollowsPath { step_delay: u32, on_hit: AttackType },
     Stun { duration: u32 },
+    CreatesWalls,
 }
 
 #[derive(Clone)]
@@ -49,7 +53,6 @@ pub struct AttackData {
     pub name: String,
     pub stam_cost: i32,
     pub attack_type: AttackType,
-    pub traits: Vec<AttackTrait>,
     pub frame_data: FrameData,
 }
 
@@ -115,25 +118,17 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
         AttackType::LanceCharge { .. } => RangeType::Single,
         AttackType::Line { radius } => RangeType::Square { size: radius },
         AttackType::Advancing { .. } => RangeType::Diamond { size: 1 },
+        AttackType::Barrier => RangeType::Single,
+        AttackType::Hook { radius } => RangeType::Square { size: radius }
     }
 }
 
 pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
     match attack_type {
         AttackType::Area => RangeType::Square { size: 3 },
-        AttackType::Melee => RangeType::Single,
-        AttackType::Stun => RangeType::Single,
-        AttackType::Push => RangeType::Single,
-        AttackType::Dodge => RangeType::Single,
-        AttackType::Recover => RangeType::Single,
-        AttackType::Haymaker => RangeType::Single,
-        AttackType::Ranged { .. } => RangeType::Single,
-        AttackType::Bolt { .. } => RangeType::Single,
-        AttackType::LanceDraw => RangeType::Single,
         AttackType::LanceThrust { dest, .. } => RangeType::Path { dest },
-        AttackType::LanceCharge { .. } => RangeType::Single,
-        AttackType::Line { .. } => RangeType::Single,
-        AttackType::Advancing => RangeType::Single,
+        AttackType::Barrier => RangeType::Ring { size: 3 },
+        _ => RangeType::Single
     }
 }
 
@@ -238,8 +233,10 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         }],
         AttackType::Advancing => vec![
             Damage { amount: 1 },
-            Knockback { amount: 2 },
+            Pull { amount: 2, pass_over: true },
             Movement { delay: 1 },
         ],
+        AttackType::Barrier => vec![CreatesWalls],
+        AttackType::Hook { radius } => vec![Damage { amount: 1 }, Pull { amount: radius - 1, pass_over: false }]
     }
 }

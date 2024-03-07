@@ -115,6 +115,62 @@ impl<'a> System<'a> for AttackSystem {
                                 .ok();
                         }
                     }
+                    crate::AttackTrait::Pull { amount, pass_over } => {
+                        let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
+                        for (ent_hit, _) in ents_hit {
+                            let src_pos = positions.get(ent).unwrap().as_point();
+                            let ent_pos = positions.get(ent_hit).unwrap().as_point();
+
+                            let offset = crate::Direction::get_direction_towards(ent_pos, src_pos)
+                                .unwrap()
+                                .to_point();
+                            let mut pull_path = rltk::line2d_bresenham(src_pos, ent_pos);
+                            pull_path.pop();
+
+                            // check for collision
+                            let mut next_x = ent_pos.x;
+                            let mut next_y = ent_pos.y;
+                            for _ in 0..amount {
+                                if let Some(path_pos) = pull_path.pop() {
+                                    next_x = path_pos.x;
+                                    next_y = path_pos.y;
+                                } else {
+                                    next_x += offset.x;
+                                    next_y += offset.y;
+                                }
+
+                                // if we collide into something, rewind the attempted movement
+                                // and insert a stun
+                                if !map.is_tile_valid(next_x, next_y)
+                                    || (!pass_over && next_x == src_pos.x && next_y == src_pos.y)
+                                {
+                                    next_x -= offset.x;
+                                    next_y -= offset.y;
+
+                                    stuns
+                                        .insert(
+                                            ent_hit,
+                                            crate::Stunned {
+                                                duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                            },
+                                        )
+                                        .ok();
+                                    break;
+                                }
+                            }
+
+                            movements
+                                .insert(
+                                    ent_hit,
+                                    crate::MoveIntent {
+                                        loc: rltk::Point::new(next_x, next_y),
+                                        force_facing: None,
+                                        delay: 0,
+                                    },
+                                )
+                                .ok();
+                        }
+                    }
                     crate::AttackTrait::Damage { amount } => {
                         let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
                         for (ent_hit, hit_locs) in ents_hit {
@@ -204,6 +260,21 @@ impl<'a> System<'a> for AttackSystem {
                                     },
                                 )
                                 .ok();
+                        }
+                    }
+                    crate::AttackTrait::CreatesWalls => {
+                        let targets = attack_type::each_attack_target(intent.main, intent.loc);
+                        for t in targets.iter() {
+                            if map.is_tile_valid(t.x, t.y) {
+                                // let wall = entities
+                                //     .build_entity()
+                                //     .with(BlocksTile)
+                                //     .with(Position { x: t.x, y: t.y }, positions)
+                                //     .build();
+
+                                // dbg!(t);
+                                // map.set_wall(t.x, t.y);
+                            }
                         }
                     }
                 }

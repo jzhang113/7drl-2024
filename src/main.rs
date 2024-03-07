@@ -619,6 +619,8 @@ fn pabb() -> Vec<AttackData> {
         LanceAttack::DrawAttack,
     ));
     attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Sweep));
+    attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Charge));
+    attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Hook));
 
     attacks
 }
