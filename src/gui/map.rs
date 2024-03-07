@@ -191,6 +191,11 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
                 continue;
             }
 
+            let index = map.get_index(point.x, point.y);
+            if !map.visible_tiles[index] {
+                continue;
+            }
+
             highlight_bg(
                 ctx,
                 &map.camera.origin,
@@ -203,6 +208,11 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
     for attack_path in (&attack_paths).join() {
         for (idx, point) in attack_path.path.iter().enumerate() {
             if !map.camera.on_screen(*point) {
+                continue;
+            }
+
+            let index = map.get_index(point.x, point.y);
+            if !map.visible_tiles[index] {
                 continue;
             }
 
