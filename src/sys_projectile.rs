@@ -50,14 +50,7 @@ impl<'a> System<'a> for ProjectileSystem {
                 loc: *impact_loc,
             };
 
-            let frame = crate::FrameData {
-                startup: 0,
-                active: 1,
-                recovery: 1,
-                current: 0,
-                cancelled: false,
-                linger_time: 0,
-            };
+            let frame = crate::get_frame_data(*next_attack);
 
             let sched = crate::Schedulable {
                 current: 0,
