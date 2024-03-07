@@ -116,6 +116,10 @@ pub fn map_exit_color() -> RGB {
     RGB::named(rltk::WHITE)
 }
 
+pub fn map_water_color() -> RGB {
+    RGB::named(rltk::DARKBLUE)
+}
+
 pub fn frame_startup_color() -> RGB {
     RGB::named(rltk::GREEN)
 }

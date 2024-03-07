@@ -1,3 +1,5 @@
+use rltk::Algorithm2D;
+
 use super::MapBuilder;
 use crate::*;
 
@@ -13,7 +15,7 @@ impl MapBuilder for OverworldBuilder {
     }
 
     fn get_starting_position(&self) -> Position {
-        self.starting_position.clone()
+        self.starting_position
     }
 
     fn get_snapshot_history(&self) -> Vec<Map> {
@@ -77,6 +79,13 @@ impl OverworldBuilder {
 
             let exit_index = self.map.get_index(self.map.width - 1, y);
             self.map.tiles[exit_index] = TileType::Floor;
+        }
+
+        for x in 13..=14 {
+            for y in 7..=10 {
+                let index = self.map.get_index(x, y);
+                self.map.tiles[index] = TileType::Water;
+            }
         }
 
         self.take_snapshot();

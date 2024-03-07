@@ -6,6 +6,7 @@ use std::collections::HashMap;
 pub enum TileType {
     Wall,
     Floor,
+    Water,
     DownStairs,
     NewLevel,
 }
@@ -139,15 +140,15 @@ impl Map {
 
         let index = self.get_index(x, y);
 
+        // walls are always invalid
+        if self.tiles[index] == TileType::Wall {
+            return false;
+        }
+
         // TODO: multi-tile bodies can still walk into players since player doesn't have a collision
         // non-blocked tiles are always valid
         if !self.blocked_tiles[index] {
             return true;
-        }
-
-        // walls are always invalid
-        if self.tiles[index] == TileType::Wall {
-            return false;
         }
 
         // blocked tiles can be valid if they belong to the search_entity (creatures are not blocked by themselves)
@@ -160,6 +161,33 @@ impl Map {
         };
 
         result
+    }
+
+    pub fn is_tile_occupied(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+
+        let index = self.get_index(x, y);
+        if self.blocked_tiles[index] {
+            return true;
+        }
+
+        // walls are automatically set to blocked
+        if self.is_tile_water(x, y) {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn is_tile_water(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
+
+        let index = self.get_index(x, y);
+        self.tiles[index] == TileType::Water
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {

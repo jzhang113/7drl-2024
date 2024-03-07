@@ -103,6 +103,18 @@ impl<'a> System<'a> for AttackSystem {
                                         .ok();
                                     break;
                                 }
+
+                                if map.is_tile_water(next_x, next_y) {
+                                    stuns
+                                        .insert(
+                                            ent_hit,
+                                            crate::Stunned {
+                                                duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                            },
+                                        )
+                                        .ok();
+                                    break;
+                                }
                             }
 
                             movements
@@ -149,6 +161,18 @@ impl<'a> System<'a> for AttackSystem {
                                     next_x -= offset.x;
                                     next_y -= offset.y;
 
+                                    stuns
+                                        .insert(
+                                            ent_hit,
+                                            crate::Stunned {
+                                                duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                            },
+                                        )
+                                        .ok();
+                                    break;
+                                }
+
+                                if map.is_tile_water(next_x, next_y) {
                                     stuns
                                         .insert(
                                             ent_hit,
@@ -267,7 +291,7 @@ impl<'a> System<'a> for AttackSystem {
                     crate::AttackTrait::CreatesWalls => {
                         let targets = attack_type::each_attack_target(intent.main, intent.loc);
                         for t in targets.iter() {
-                            if map.is_tile_valid(t.x, t.y) {
+                            if !map.is_tile_occupied(t.x, t.y) {
                                 s_builder.spawn(crate::SpawnRequest {
                                     position: *t,
                                     spawn_type: crate::SpawnType::Wall,
