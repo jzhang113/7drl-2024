@@ -146,7 +146,7 @@ fn handle_attack(gs: &mut State, data: AttackData) -> RunState {
     attacks
         .insert(*player, intent)
         .expect("Failed to insert new attack from player");
-    frames.insert(*player, data.frame_data).ok();
+    frames.insert(*player, attack_type::get_frame_data(data.attack_type)).ok();
 
     RunState::Running
 }
