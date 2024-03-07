@@ -206,7 +206,17 @@ pub fn draw_attacks_in_progress(ecs: &World, ctx: &mut Rltk) {
     }
 
     for attack_path in (&attack_paths).join() {
+        let mut path_valid = true;
+
         for (idx, point) in attack_path.path.iter().enumerate() {
+            if !path_valid {
+                break;
+            }
+
+            // don't draw paths that won't actually be reached
+            // note that the entire path is still stored since the obstruction may have moved
+            path_valid = map.is_tile_valid(point.x, point.y);
+
             if !map.camera.on_screen(*point) {
                 continue;
             }
