@@ -37,6 +37,7 @@ mod sys_partmove;
 mod sys_pickup;
 mod sys_projectile;
 mod sys_push;
+mod sys_spawner;
 mod sys_stun;
 mod sys_trap_ai;
 mod sys_turn;
@@ -57,6 +58,7 @@ pub use range_type::*;
 pub use spawn::info::SpawnInfo;
 pub use sys_ai::{Behavior, NextIntent};
 pub use sys_particle::{ParticleBuilder, ParticleRequest};
+pub use sys_spawner::{SpawnRequest, SpawnType, Spawner};
 
 use gamelog::GameLog;
 
@@ -128,6 +130,7 @@ impl State {
         self.ecs.register::<Schedulable>();
         self.ecs.register::<ParticleLifetime>();
         self.ecs.register::<BlocksTile>();
+        self.ecs.register::<BlocksVision>();
         self.ecs.register::<Viewable>();
         self.ecs.register::<ViewableIndex>();
 
@@ -164,6 +167,7 @@ impl State {
 
         self.ecs.insert(RunState::Running);
         self.ecs.insert(sys_particle::ParticleBuilder::new());
+        self.ecs.insert(sys_spawner::Spawner::new());
 
         let mut rng = rltk::RandomNumberGenerator::new();
 
@@ -221,6 +225,7 @@ impl State {
         // death needs to run after attacks so bodies are cleaned up
         sys_death::DeathSystem.run_now(&self.ecs);
 
+        sys_spawner::SpawnSystem.run_now(&self.ecs);
         sys_visibility::VisibilitySystem.run_now(&self.ecs);
         sys_particle::ParticleSpawnSystem.run_now(&self.ecs);
 

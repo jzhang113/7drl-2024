@@ -134,7 +134,7 @@ pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
 
 pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Area => 1,
+        AttackType::Area => 25,
         AttackType::Stun => 2,
         AttackType::Bolt { .. } => 5,
         _ => 10,

@@ -15,6 +15,7 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::Health>,
         WriteStorage<'a, crate::MultiTile>,
         WriteExpect<'a, crate::ParticleBuilder>,
+        WriteExpect<'a, crate::Spawner>,
         ReadExpect<'a, Entity>,
         WriteExpect<'a, crate::RunState>,
         WriteStorage<'a, crate::Invulnerable>,
@@ -35,6 +36,7 @@ impl<'a> System<'a> for AttackSystem {
             mut healths,
             mut multis,
             mut p_builder,
+            mut s_builder,
             player,
             mut run_state,
             mut invulns,
@@ -266,14 +268,10 @@ impl<'a> System<'a> for AttackSystem {
                         let targets = attack_type::each_attack_target(intent.main, intent.loc);
                         for t in targets.iter() {
                             if map.is_tile_valid(t.x, t.y) {
-                                // let wall = entities
-                                //     .build_entity()
-                                //     .with(BlocksTile)
-                                //     .with(Position { x: t.x, y: t.y }, positions)
-                                //     .build();
-
-                                // dbg!(t);
-                                // map.set_wall(t.x, t.y);
+                                s_builder.spawn(crate::SpawnRequest {
+                                    position: *t,
+                                    spawn_type: crate::SpawnType::Wall,
+                                })
                             }
                         }
                     }

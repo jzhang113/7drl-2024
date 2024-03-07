@@ -1,4 +1,4 @@
-use super::{Map, Player, Position, Viewable, ViewableIndex, Viewshed};
+use crate::*;
 use rltk::{Algorithm2D, Point};
 use specs::prelude::*;
 
@@ -13,14 +13,33 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteStorage<'a, Viewable>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Player>,
+        ReadStorage<'a, BlocksVision>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, entities, mut viewsheds, mut view_indexes, mut _viewables, pos, player) = data;
+        let (
+            mut map,
+            entities,
+            mut viewsheds,
+            mut view_indexes,
+            mut _viewables,
+            pos,
+            player,
+            vis_blockers,
+        ) = data;
         let mut player_seen = Vec::new();
+        let mut recompute_vision = false;
+
+        // TODO: technically this only needs to change if the entities in vis_blockers changes
+        map.reset_vision();
+        for (ent, pos, _) in (&entities, &pos, &vis_blockers).join() {
+            let index = map.get_index(pos.x, pos.y);
+            map.blocked_vision[index] = true;
+            recompute_vision = true;
+        }
 
         for (ent, viewshed, pos) in (&entities, &mut viewsheds, &pos).join() {
-            if !viewshed.dirty {
+            if !viewshed.dirty && !recompute_vision {
                 continue;
             }
 

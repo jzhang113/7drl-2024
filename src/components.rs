@@ -58,6 +58,9 @@ pub struct ParticleLifetime {
 #[derive(Component)]
 pub struct BlocksTile;
 
+#[derive(Component)]
+pub struct BlocksVision;
+
 #[derive(Component, Debug)]
 pub struct Health {
     pub current: i32,

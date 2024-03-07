@@ -1,4 +1,4 @@
-use crate::{AttackData, AttackIntent, AttackTrait, AttackType};
+use crate::{AttackData, AttackType};
 
 #[derive(Copy, Clone)]
 pub enum LanceAttack {

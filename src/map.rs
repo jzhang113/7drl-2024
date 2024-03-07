@@ -30,12 +30,13 @@ pub struct Map {
     pub known_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked_tiles: Vec<bool>,
+    pub blocked_vision: Vec<bool>,
     search_args: SearchArgs,
 }
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx] == TileType::Wall
+        self.tiles[idx] == TileType::Wall || self.blocked_vision[idx]
     }
 
     fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
@@ -110,12 +111,18 @@ impl Map {
             known_tiles: vec![false; dim],
             visible_tiles: vec![false; dim],
             blocked_tiles: vec![false; dim],
+            blocked_vision: vec![false; dim], // this is probably sparse?
             search_args: SearchArgs::default(),
         }
     }
 
     pub fn get_index(&self, x: i32, y: i32) -> usize {
         ((y * self.width) + x) as usize
+    }
+
+    pub fn reset_vision(&mut self) {
+        let dim = (self.width * self.height).try_into().unwrap();
+        self.blocked_vision = vec![false; dim];
     }
 
     pub fn set_blocked_tiles(&mut self) {
