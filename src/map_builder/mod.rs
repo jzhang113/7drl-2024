@@ -2,6 +2,7 @@ use crate::*;
 use std::collections::HashMap;
 
 mod common;
+mod lake_spawner;
 mod noise_region;
 mod room_corridor;
 mod room_drawer;
@@ -157,8 +158,9 @@ pub fn with_builder(args: &MapBuilderArgs) -> BuilderChain {
     let mut builder = BuilderChain::new(args, &mut rng);
 
     get_builder(&mut builder, args.builder_type, &mut rng);
-    // builder.with()
     builder.with(noise_region::NoiseRegion::new());
+    builder.with(lake_spawner::LakeSpawner::new());
+    builder.with(lake_spawner::LakeEroder::new());
 
     builder
 }
@@ -173,6 +175,7 @@ fn get_builder(
             builder.starts_with(random_room::RandomRoomBuilder::new());
             builder.with(room_drawer::RoomDrawer::new());
             builder.with(room_corridor::NearestCorridor::new());
+            builder.with(drunk_walk::DrunkardsWalkBuilder::winding_passages());
             builder.with(starting_pos::RoomBasedStartingPos::new());
         }
         // 2 => Box::new(BspInteriorBuilder::new(new_depth)),

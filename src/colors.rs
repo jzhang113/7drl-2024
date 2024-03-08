@@ -120,6 +120,10 @@ pub fn map_water_color() -> RGB {
     RGB::named(rltk::DARKBLUE)
 }
 
+pub fn map_shallow_water_color() -> RGB {
+    RGB::named(rltk::LIGHTBLUE)
+}
+
 pub fn frame_startup_color() -> RGB {
     RGB::named(rltk::GREEN)
 }

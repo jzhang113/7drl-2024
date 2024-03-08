@@ -1,5 +1,5 @@
 use super::common::*;
-use super::{BuilderMap, InitialMapBuilder};
+use super::{BuilderMap, InitialMapBuilder, MetaMapBuilder};
 use crate::*;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -20,6 +20,12 @@ pub struct DrunkardsWalkBuilder {
 }
 
 impl InitialMapBuilder for DrunkardsWalkBuilder {
+    fn build_map(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator) {
+        self.build(build_data, rng);
+    }
+}
+
+impl MetaMapBuilder for DrunkardsWalkBuilder {
     fn build_map(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator) {
         self.build(build_data, rng);
     }

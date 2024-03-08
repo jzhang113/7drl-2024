@@ -7,6 +7,7 @@ pub enum TileType {
     Wall,
     Floor,
     Water,
+    ShallowWater,
     DownStairs,
     NewLevel,
 }
@@ -187,7 +188,7 @@ impl Map {
         }
 
         let index = self.get_index(x, y);
-        self.tiles[index] == TileType::Water
+        self.tiles[index] == TileType::Water || self.tiles[index] == TileType::ShallowWater
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {

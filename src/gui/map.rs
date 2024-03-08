@@ -35,6 +35,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 TileType::Floor => (rltk::to_cp437('.'), map_floor_color()),
                 TileType::Wall => (rltk::to_cp437('#'), map.color_map[idx]),
                 TileType::Water => (rltk::to_cp437('~'), map_water_color()),
+                TileType::ShallowWater => (rltk::to_cp437('~'), map_shallow_water_color()),
                 TileType::DownStairs => (rltk::to_cp437('>'), map_exit_color()),
                 TileType::NewLevel => (rltk::to_cp437('>'), map_exit_color()),
             };

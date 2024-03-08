@@ -39,7 +39,8 @@ impl<'a> System<'a> for SpawnSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut spawner, mut blockers, mut vis_blockers, mut positions, mut renderables) = data;
+        let (entities, mut spawner, mut blockers, mut vis_blockers, mut positions, mut renderables) =
+            data;
 
         for request in spawner.requests.drain(..) {
             match request.spawn_type {

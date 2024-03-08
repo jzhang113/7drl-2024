@@ -1,5 +1,6 @@
 use super::{BuilderMap, MetaMapBuilder};
 use crate::TileType;
+use noise::*;
 use std::collections::HashMap;
 
 pub struct NoiseRegion;
@@ -23,16 +24,15 @@ impl NoiseRegion {
         rng: &mut rltk::RandomNumberGenerator,
     ) {
         let mut noise_areas: HashMap<i32, Vec<usize>> = HashMap::new();
-        let mut noise = rltk::FastNoise::seeded(rng.roll_dice(1, 65536) as u64);
-        noise.set_noise_type(rltk::NoiseType::Cellular);
-        noise.set_frequency(0.08);
-        noise.set_cellular_distance_function(rltk::CellularDistanceFunction::Manhattan);
+        let generator = Worley::new(rng.roll_dice(1, 65536) as u32)
+            .set_frequency(0.05)
+            .set_return_type(core::worley::ReturnType::Value);
 
         for y in 1..build_data.map.height - 1 {
             for x in 1..build_data.map.width - 1 {
                 let idx = build_data.map.get_index(x, y);
                 if build_data.map.tiles[idx] == TileType::Floor {
-                    let cell_value_f = noise.get_noise(x as f32, y as f32) * 10240.0;
+                    let cell_value_f = generator.get([x as f64, y as f64]) * 1024.0;
                     let cell_value = cell_value_f as i32;
 
                     if noise_areas.contains_key(&cell_value) {
