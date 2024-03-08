@@ -242,55 +242,6 @@ impl Map {
         self.get_available_exits(idx)
     }
 
-    pub(crate) fn build_room(&mut self, room: Rect) {
-        for y in room.y1..=room.y2 {
-            for x in room.x1..=room.x2 {
-                let index = self.get_index(x, y);
-                self.tiles[index] = TileType::Floor;
-                self.color_map[index] = crate::map_floor_color();
-            }
-        }
-
-        self.rooms.push(room);
-    }
-
-    /// Create a hallway of TileType::Floor between the given start and end points
-    /// The hallway will always be built horizontally from the start position and vertically from the end position
-    pub(crate) fn build_hallway(&mut self, start: Point, end: Point) {
-        let xrange;
-        let yrange;
-
-        if start.x > end.x {
-            xrange = (end.x - start.x)..=0;
-        } else {
-            xrange = 0..=(end.x - start.x);
-        }
-
-        if start.y > end.y {
-            yrange = 0..=(start.y - end.y);
-        } else {
-            yrange = (start.y - end.y)..=0;
-        }
-
-        for dx in xrange {
-            let next_x = start.x + dx;
-            let next_y = start.y;
-
-            let index = self.get_index(next_x, next_y);
-            self.tiles[index] = TileType::Floor;
-            self.color_map[index] = crate::map_floor_color();
-        }
-
-        for dy in yrange {
-            let next_x = end.x;
-            let next_y = end.y + dy;
-
-            let index = self.get_index(next_x, next_y);
-            self.tiles[index] = TileType::Floor;
-            self.color_map[index] = crate::map_floor_color();
-        }
-    }
-
     pub fn track_item(&mut self, data: Entity, point: Point) -> bool {
         let index = self.point2d_to_index(point);
 

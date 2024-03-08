@@ -23,10 +23,10 @@ impl RandomRoomBuilder {
     pub fn new() -> Box<RandomRoomBuilder> {
         Box::new(Self {
             settings: RandomRoomSettings {
-                max_rooms: 12,
-                min_room_width: 5,
+                max_rooms: 20,
+                min_room_width: 8,
                 max_room_width: 15,
-                min_room_height: 5,
+                min_room_height: 8,
                 max_room_height: 15,
             },
         })
@@ -54,12 +54,6 @@ impl RandomRoomBuilder {
                 rooms.push(new_room);
             }
         }
-
-        for r in rooms.iter() {
-            build_data.map.build_room(*r);
-        }
-        build_data.map.set_blocked_tiles();
-
         build_data.rooms = Some(rooms);
     }
 }

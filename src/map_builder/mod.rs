@@ -3,6 +3,9 @@ use std::collections::HashMap;
 
 mod common;
 mod noise_region;
+mod room_corridor;
+mod room_drawer;
+mod starting_pos;
 
 pub mod drunk_walk;
 pub mod overworld;
@@ -154,6 +157,7 @@ pub fn with_builder(args: &MapBuilderArgs) -> BuilderChain {
     let mut builder = BuilderChain::new(args, &mut rng);
 
     get_builder(&mut builder, args.builder_type, &mut rng);
+    // builder.with()
     builder.with(noise_region::NoiseRegion::new());
 
     builder
@@ -165,7 +169,12 @@ fn get_builder(
     rng: &mut rltk::RandomNumberGenerator,
 ) {
     match builder_type {
-        0 => builder.starts_with(random_room::RandomRoomBuilder::new()),
+        0 => {
+            builder.starts_with(random_room::RandomRoomBuilder::new());
+            builder.with(room_drawer::RoomDrawer::new());
+            builder.with(room_corridor::NearestCorridor::new());
+            builder.with(starting_pos::RoomBasedStartingPos::new());
+        }
         // 2 => Box::new(BspInteriorBuilder::new(new_depth)),
         // 3 => Box::new(CellularAutomataBuilder::new(new_depth)),
         1 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_area()),
