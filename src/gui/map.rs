@@ -41,7 +41,12 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
             };
 
             if !map.visible_tiles[idx] {
-                fg = fg.to_greyscale()
+                // TODO: the deep water color does not convert to greyscale nicely
+                if map.tiles[idx] == TileType::Water {
+                    fg = map_shallow_water_color().to_greyscale();
+                } else {
+                    fg = fg.to_greyscale();
+                }
             }
 
             set_map_tile(
