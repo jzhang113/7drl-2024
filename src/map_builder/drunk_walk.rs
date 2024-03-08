@@ -178,9 +178,5 @@ impl DrunkardsWalkBuilder {
 
         // Place the stairs
         // build_data.map.tiles[exit_tile] = TileType::DownStairs;
-        build_data.take_snapshot();
-
-        // Now we build a noise map for use in spawning entities later
-        build_data.noise_areas = generate_voronoi_spawn_regions(&build_data.map, rng);
     }
 }

@@ -1,10 +1,12 @@
 use crate::*;
 use std::collections::HashMap;
 
-// pub mod bsp;
 mod common;
+mod noise_region;
+
 pub mod drunk_walk;
 pub mod overworld;
+pub mod random_room;
 
 const SHOW_MAPGEN_VISUALIZER: bool = false;
 
@@ -13,6 +15,7 @@ pub struct BuilderMap {
     pub history: Vec<Map>,
     pub starting_position: Position,
     pub noise_areas: HashMap<i32, Vec<usize>>,
+    pub rooms: Option<Vec<rltk::Rect>>,
 }
 
 impl BuilderMap {
@@ -52,6 +55,7 @@ impl BuilderChain {
                 starting_position: Position { x: 0, y: 0 },
                 history: Vec::new(),
                 noise_areas: HashMap::new(),
+                rooms: None,
             },
         }
     }
@@ -102,9 +106,6 @@ impl BuilderChain {
                         targets.insert(entity, MissionTarget).ok();
                     }
 
-                    dbg!(entity);
-                    dbg!(map_index);
-
                     spawn::spawner::track_entity(ecs, entity, map_index);
                     let mut m_info = ecs.fetch_mut::<crate::MissionInfo>();
                     m_info.add(entity);
@@ -153,6 +154,7 @@ pub fn with_builder(args: &MapBuilderArgs) -> BuilderChain {
     let mut builder = BuilderChain::new(args, &mut rng);
 
     get_builder(&mut builder, args.builder_type, &mut rng);
+    builder.with(noise_region::NoiseRegion::new());
 
     builder
 }
@@ -163,7 +165,7 @@ fn get_builder(
     rng: &mut rltk::RandomNumberGenerator,
 ) {
     match builder_type {
-        //1 => Box::new(BspDungeonBuilder::new(new_depth)),
+        0 => builder.starts_with(random_room::RandomRoomBuilder::new()),
         // 2 => Box::new(BspInteriorBuilder::new(new_depth)),
         // 3 => Box::new(CellularAutomataBuilder::new(new_depth)),
         1 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_area()),
