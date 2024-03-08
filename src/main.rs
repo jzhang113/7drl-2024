@@ -286,7 +286,8 @@ impl State {
         let mut map_builder = map_builder::with_builder(map_builder_args);
         let new_map = {
             let mut rng = self.ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-            map_builder.build_map(&mut rng)
+            map_builder.build_map(&mut rng);
+            map_builder.build_data.map.clone()
         };
 
         {
@@ -297,7 +298,7 @@ impl State {
                 .get_mut(*player)
                 .expect("player didn't have a position");
 
-            let new_player_pos = map_builder.get_starting_position();
+            let new_player_pos = map_builder.build_data.starting_position;
             player_pos.x = new_player_pos.x;
             player_pos.y = new_player_pos.y;
 
@@ -313,8 +314,13 @@ impl State {
             *map_writer = new_map;
         }
 
+        // TODO: handle spawning as a meta map builder
         // fill the map
-        map_builder.spawn_entities(&mut self.ecs, spawn_info);
+        if map_builder_args.builder_type == 4 {
+            map_builder.spawn_overworld(&mut self.ecs, spawn_info);
+        } else {
+            map_builder.spawn_entities(&mut self.ecs, spawn_info);
+        }
     }
 
     fn reset_player(&mut self) {

@@ -1,7 +1,6 @@
 use super::common::*;
-use super::MapBuilder;
+use super::{BuilderMap, InitialMapBuilder};
 use crate::*;
-use std::collections::HashMap;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum DrunkSpawnMode {
@@ -17,153 +16,69 @@ pub struct DrunkardSettings {
 }
 
 pub struct DrunkardsWalkBuilder {
-    map: Map,
-    starting_position: Position,
-    history: Vec<Map>,
-    noise_areas: HashMap<i32, Vec<usize>>,
     settings: DrunkardSettings,
 }
 
-impl MapBuilder for DrunkardsWalkBuilder {
-    fn get_map(&self) -> Map {
-        self.map.clone()
-    }
-
-    fn get_starting_position(&self) -> Position {
-        self.starting_position.clone()
-    }
-
-    fn get_snapshot_history(&self) -> Vec<Map> {
-        self.history.clone()
-    }
-
-    fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator) -> Map {
-        self.build(rng);
-        self.get_map()
-    }
-
-    fn spawn_entities(&mut self, ecs: &mut World, spawn_info: &crate::SpawnInfo) {
-        {
-            // spawn exactly 1 of each in the major monster list
-            for name in &spawn_info.major_monsters {
-                let map_index = {
-                    let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-                    let random_area = rng.range(0, self.noise_areas.len());
-                    let random_spawn = &self.noise_areas.iter().nth(random_area).unwrap();
-                    random_spawn.1[rng.range(0, random_spawn.1.len())]
-                };
-
-                let entity = spawn::spawner::build_from_name(ecs, name, map_index);
-                // track the entity if we built one
-                if let Some(entity) = entity {
-                    {
-                        // mark as a target
-                        let mut targets = ecs.write_storage::<crate::MissionTarget>();
-                        targets.insert(entity, MissionTarget).ok();
-                    }
-
-                    spawn::spawner::track_entity(ecs, entity, map_index);
-                    let mut m_info = ecs.fetch_mut::<crate::MissionInfo>();
-                    m_info.add(entity);
-                }
-            }
-        }
-
-        // random spawns in each area of minor monsters and resources
-        for area in self.noise_areas.iter() {
-            spawn::spawner::spawn_region(ecs, area.1, spawn_info);
-        }
-    }
-
-    fn take_snapshot(&mut self) {
-        if super::SHOW_MAPGEN_VISUALIZER {
-            let mut snapshot = self.map.clone();
-            for v in snapshot.known_tiles.iter_mut() {
-                *v = true;
-            }
-            self.history.push(snapshot);
-        }
+impl InitialMapBuilder for DrunkardsWalkBuilder {
+    fn build_map(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator) {
+        self.build(build_data, rng);
     }
 }
 
 impl DrunkardsWalkBuilder {
     #[allow(dead_code)]
-    pub fn new(
-        args: &super::MapBuilderArgs,
-        rng: &mut rltk::RandomNumberGenerator,
-        settings: DrunkardSettings,
-    ) -> Self {
-        Self {
-            map: Map::new(args.width, args.height, &args.name, &args.map_color, rng),
-            starting_position: Position { x: 0, y: 0 },
-            history: Vec::new(),
-            noise_areas: HashMap::new(),
-            settings,
-        }
+    pub fn new(settings: DrunkardSettings) -> Self {
+        Self { settings }
     }
 
-    pub fn open_area(args: &super::MapBuilderArgs, rng: &mut rltk::RandomNumberGenerator) -> Self {
-        Self {
-            map: Map::new(args.width, args.height, &args.name, &args.map_color, rng),
-            starting_position: Position { x: 0, y: 0 },
-            history: Vec::new(),
-            noise_areas: HashMap::new(),
+    pub fn open_area() -> Box<Self> {
+        Box::new(Self {
             settings: DrunkardSettings {
                 spawn_mode: DrunkSpawnMode::StartingPoint,
                 drunken_lifetime: 1000,
                 floor_percent: 0.5,
                 digger_size: 4,
             },
-        }
+        })
     }
 
-    pub fn open_halls(args: &super::MapBuilderArgs, rng: &mut rltk::RandomNumberGenerator) -> Self {
-        Self {
-            map: Map::new(args.width, args.height, &args.name, &args.map_color, rng),
-            starting_position: Position { x: 0, y: 0 },
-            history: Vec::new(),
-            noise_areas: HashMap::new(),
+    pub fn open_halls() -> Box<Self> {
+        Box::new(Self {
             settings: DrunkardSettings {
                 spawn_mode: DrunkSpawnMode::Random,
                 drunken_lifetime: 400,
                 floor_percent: 0.5,
                 digger_size: 3,
             },
-        }
+        })
     }
 
-    pub fn winding_passages(
-        args: &super::MapBuilderArgs,
-        rng: &mut rltk::RandomNumberGenerator,
-    ) -> Self {
-        Self {
-            map: Map::new(args.width, args.height, &args.name, &args.map_color, rng),
-            starting_position: Position { x: 0, y: 0 },
-            history: Vec::new(),
-            noise_areas: HashMap::new(),
+    pub fn winding_passages() -> Box<Self> {
+        Box::new(Self {
             settings: DrunkardSettings {
                 spawn_mode: DrunkSpawnMode::Random,
                 drunken_lifetime: 100,
                 floor_percent: 0.4,
                 digger_size: 2,
             },
-        }
+        })
     }
 
-    fn build(&mut self, rng: &mut rltk::RandomNumberGenerator) {
+    fn build(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator) {
         // Set a central starting point
-        self.starting_position = Position {
-            x: self.map.width / 2,
-            y: self.map.height / 2,
+        build_data.starting_position = Position {
+            x: build_data.map.width / 2,
+            y: build_data.map.height / 2,
         };
-        let start_idx = self
-            .map
-            .get_index(self.starting_position.x, self.starting_position.y);
-        self.map.tiles[start_idx] = TileType::Floor;
+        let start_idx = build_data.map.get_index(
+            build_data.starting_position.x,
+            build_data.starting_position.y,
+        );
+        build_data.map.tiles[start_idx] = TileType::Floor;
 
-        let total_tiles = self.map.width * self.map.height;
+        let total_tiles = build_data.map.width * build_data.map.height;
         let desired_floor_tiles = (self.settings.floor_percent * total_tiles as f32) as usize;
-        let mut floor_tile_count = self
+        let mut floor_tile_count = build_data
             .map
             .tiles
             .iter()
@@ -177,18 +92,20 @@ impl DrunkardsWalkBuilder {
             let mut drunk_y;
             match self.settings.spawn_mode {
                 DrunkSpawnMode::StartingPoint => {
-                    drunk_x = self.starting_position.x;
-                    drunk_y = self.starting_position.y;
+                    drunk_x = build_data.starting_position.x;
+                    drunk_y = build_data.starting_position.y;
                 }
                 DrunkSpawnMode::Random => {
                     if digger_count == 0 {
-                        drunk_x = self.starting_position.x;
-                        drunk_y = self.starting_position.y;
+                        drunk_x = build_data.starting_position.x;
+                        drunk_y = build_data.starting_position.y;
                     } else {
-                        drunk_x =
-                            rng.roll_dice(1, self.map.width - self.settings.digger_size - 2) + 1;
-                        drunk_y =
-                            rng.roll_dice(1, self.map.height - self.settings.digger_size - 2) + 1;
+                        drunk_x = rng
+                            .roll_dice(1, build_data.map.width - self.settings.digger_size - 2)
+                            + 1;
+                        drunk_y = rng
+                            .roll_dice(1, build_data.map.height - self.settings.digger_size - 2)
+                            + 1;
                     }
                 }
             }
@@ -197,11 +114,11 @@ impl DrunkardsWalkBuilder {
             while drunk_life > 0 {
                 for dx in 0..=self.settings.digger_size {
                     for dy in 0..=self.settings.digger_size {
-                        let drunk_idx = self.map.get_index(drunk_x + dx, drunk_y + dy);
-                        if self.map.tiles[drunk_idx] == TileType::Wall {
+                        let drunk_idx = build_data.map.get_index(drunk_x + dx, drunk_y + dy);
+                        if build_data.map.tiles[drunk_idx] == TileType::Wall {
                             did_something = true;
                         }
-                        self.map.tiles[drunk_idx] = TileType::DownStairs;
+                        build_data.map.tiles[drunk_idx] = TileType::DownStairs;
                     }
                 }
 
@@ -213,7 +130,7 @@ impl DrunkardsWalkBuilder {
                         }
                     }
                     2 => {
-                        if drunk_x < self.map.width - self.settings.digger_size - 2 {
+                        if drunk_x < build_data.map.width - self.settings.digger_size - 2 {
                             drunk_x += 1;
                         }
                     }
@@ -223,7 +140,7 @@ impl DrunkardsWalkBuilder {
                         }
                     }
                     _ => {
-                        if drunk_y < self.map.height - self.settings.digger_size - 2 {
+                        if drunk_y < build_data.map.height - self.settings.digger_size - 2 {
                             drunk_y += 1;
                         }
                     }
@@ -232,17 +149,17 @@ impl DrunkardsWalkBuilder {
                 drunk_life -= 1;
             }
             if did_something {
-                self.take_snapshot();
+                build_data.take_snapshot();
                 active_digger_count += 1;
             }
 
             digger_count += 1;
-            for t in self.map.tiles.iter_mut() {
+            for t in build_data.map.tiles.iter_mut() {
                 if *t == TileType::DownStairs {
                     *t = TileType::Floor;
                 }
             }
-            floor_tile_count = self
+            floor_tile_count = build_data
                 .map
                 .tiles
                 .iter()
@@ -255,14 +172,15 @@ impl DrunkardsWalkBuilder {
         ));
 
         // Find all tiles we can reach from the starting point
-        let exit_tile = remove_unreachable_areas_returning_most_distant(&mut self.map, start_idx);
-        self.take_snapshot();
+        let exit_tile =
+            remove_unreachable_areas_returning_most_distant(&mut build_data.map, start_idx);
+        build_data.take_snapshot();
 
         // Place the stairs
-        // self.map.tiles[exit_tile] = TileType::DownStairs;
-        self.take_snapshot();
+        // build_data.map.tiles[exit_tile] = TileType::DownStairs;
+        build_data.take_snapshot();
 
         // Now we build a noise map for use in spawning entities later
-        self.noise_areas = generate_voronoi_spawn_regions(&self.map, rng);
+        build_data.noise_areas = generate_voronoi_spawn_regions(&build_data.map, rng);
     }
 }
