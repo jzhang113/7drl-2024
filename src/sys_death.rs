@@ -13,6 +13,8 @@ impl<'a> System<'a> for DeathSystem {
         ReadStorage<'a, crate::MultiTile>,
         ReadStorage<'a, crate::MissionTarget>,
         WriteExpect<'a, crate::MissionInfo>,
+        WriteStorage<'a, crate::Fragile>,
+        WriteStorage<'a, crate::Viewshed>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -26,6 +28,8 @@ impl<'a> System<'a> for DeathSystem {
             multitiles,
             targets,
             mut m_info,
+            mut breakables,
+            mut viewsheds,
         ) = data;
         let mut dead = Vec::new();
 
@@ -50,6 +54,19 @@ impl<'a> System<'a> for DeathSystem {
                     *run_state = crate::RunState::Dead { success: false };
                 }
             }
+        }
+
+        for (ent, pos, fragile) in (&entities, &positions, &breakables).join() {
+            if fragile.was_hit || fragile.lifetime == 0 {
+                let pos_index = map.get_index(pos.x, pos.y);
+                map.untrack_creature(pos_index, None);
+                dead.push(ent);
+            }
+        }
+
+        // if any dead entities blocked vision, we need to recompute viewsheds
+        for (ent, viewshed) in (&entities, &mut viewsheds).join() {
+            viewshed.dirty = true;
         }
 
         for victim in dead {

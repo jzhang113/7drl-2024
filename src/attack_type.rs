@@ -216,7 +216,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
             },
         ], // 24 / 4 = 6 ticks
         AttackType::Recover => vec![Heal { amount: 2 }],
-        AttackType::Haymaker => vec![Damage { amount: 2 }],
+        AttackType::Haymaker => vec![Damage { amount: 1 }, Knockback { amount: 2 } ],
         AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
         AttackType::Bolt { .. } => vec![FollowsPath {
             step_delay: 3,

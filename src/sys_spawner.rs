@@ -36,10 +36,11 @@ impl<'a> System<'a> for SpawnSystem {
         WriteStorage<'a, BlocksVision>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, Renderable>,
+        WriteStorage<'a, Fragile>
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut spawner, mut blockers, mut vis_blockers, mut positions, mut renderables) =
+        let (entities, mut spawner, mut blockers, mut vis_blockers, mut positions, mut renderables, mut breakables) =
             data;
 
         for request in spawner.requests.drain(..) {
@@ -65,6 +66,7 @@ impl<'a> System<'a> for SpawnSystem {
                             },
                             &mut renderables,
                         )
+                        .with(Fragile { lifetime: 3, was_hit: false }, &mut breakables)
                         .build();
                 }
             }

@@ -156,6 +156,12 @@ pub struct Item;
 pub struct Openable;
 
 #[derive(Component)]
+pub struct Fragile {
+    pub lifetime: u32,
+    pub was_hit: bool,
+}
+
+#[derive(Component)]
 pub struct MultiTile {
     pub part_list: Vec<crate::MonsterPart>,
     pub bounds: rltk::Rect,

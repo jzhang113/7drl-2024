@@ -24,6 +24,7 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::AttackPath>,
         ReadStorage<'a, crate::FrameData>,
         WriteStorage<'a, crate::Stunned>,
+        WriteStorage<'a, crate::Fragile>
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -45,6 +46,7 @@ impl<'a> System<'a> for AttackSystem {
             mut attack_paths,
             frames,
             mut stuns,
+            mut breakables,
         ) = data;
         let mut finished_attacks = Vec::new();
 
@@ -90,6 +92,13 @@ impl<'a> System<'a> for AttackSystem {
                                 // if we collide into something, rewind the attempted movement
                                 // and insert a stun
                                 if !map.is_tile_valid(next_x, next_y) {
+                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                        if let Some(fragile) = breakables.get_mut(*collided_ent) {
+                                            fragile.was_hit = true;
+                                            p_builder.make_hit_particle(*collided_ent);
+                                        }
+                                    }
+
                                     next_x -= offset.x;
                                     next_y -= offset.y;
 
@@ -158,6 +167,13 @@ impl<'a> System<'a> for AttackSystem {
                                 if !map.is_tile_valid(next_x, next_y)
                                     || (!pass_over && next_x == src_pos.x && next_y == src_pos.y)
                                 {
+                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                        if let Some(fragile) = breakables.get_mut(*collided_ent) {
+                                            fragile.was_hit = true;
+                                            p_builder.make_hit_particle(*collided_ent);
+                                        }
+                                    }
+
                                     next_x -= offset.x;
                                     next_y -= offset.y;
 
@@ -204,6 +220,11 @@ impl<'a> System<'a> for AttackSystem {
                                 continue;
                             }
 
+                            if let Some(fragile) = breakables.get_mut(ent_hit) {
+                                fragile.was_hit = true;
+                                p_builder.make_hit_particle(ent_hit);
+                            }
+
                             if let Some(aff_health) = healths.get_mut(ent_hit) {
                                 aff_health.current -= amount;
 
@@ -229,7 +250,12 @@ impl<'a> System<'a> for AttackSystem {
                     crate::AttackTrait::Stun { duration } => {
                         let ents_hit = self.get_hit_entities(&mut p_builder, &map, ent, intent);
                         for (ent_hit, _) in ents_hit {
+                            if let Some(fragile) = breakables.get_mut(ent_hit) {
+                                fragile.was_hit = true;
+                            }
+
                             stuns.insert(ent_hit, crate::Stunned { duration }).ok();
+                            p_builder.make_stun_particle(ent_hit);
                         }
                     }
                     crate::AttackTrait::Movement { delay } => {

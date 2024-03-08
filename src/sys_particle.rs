@@ -65,6 +65,16 @@ impl ParticleBuilder {
         });
     }
 
+    pub fn make_stun_particle(&mut self, entity: Entity) {
+        self.make_particle(crate::ParticleRequest {
+            color: crate::particle_stun_color(),
+            lifetime: 300.0,
+            position: ParticleTarget::EntityTarget(entity),
+            symbol: rltk::to_cp437('*'),
+            zindex: 1,
+        });
+    }
+
     pub fn make_bg_particle(&mut self, point: Point) {
         self.make_particle(crate::ParticleRequest {
             color: crate::particle_bg_color(),

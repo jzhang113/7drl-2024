@@ -151,6 +151,7 @@ impl State {
         self.ecs.register::<Heal>();
         self.ecs.register::<Item>();
         self.ecs.register::<Openable>();
+        self.ecs.register::<Fragile>();
 
         self.ecs.register::<MultiTile>();
         self.ecs.register::<Facing>();

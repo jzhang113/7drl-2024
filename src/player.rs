@@ -67,11 +67,11 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 } else {
                     // bump attack
                     let attack = crate::attack_type::get_attack_intent(
-                        AttackType::Melee,
+                        AttackType::Haymaker,
                         Point::new(new_x, new_y),
                         None,
                     );
-                    let frame = crate::attack_type::get_frame_data(AttackType::Melee);
+                    let frame = crate::attack_type::get_frame_data(AttackType::Haymaker);
 
                     attacks
                         .insert(*player, attack)
@@ -146,7 +146,9 @@ fn handle_attack(gs: &mut State, data: AttackData) -> RunState {
     attacks
         .insert(*player, intent)
         .expect("Failed to insert new attack from player");
-    frames.insert(*player, attack_type::get_frame_data(data.attack_type)).ok();
+    frames
+        .insert(*player, attack_type::get_frame_data(data.attack_type))
+        .ok();
 
     RunState::Running
 }
@@ -355,26 +357,13 @@ pub fn end_turn_cleanup(ecs: &mut World) {
     // remove can act flag
     // let player = ecs.fetch::<Entity>();
     let mut can_act = ecs.write_storage::<super::CanActFlag>();
-    // let mut can_react = ecs.write_storage::<super::CanReactFlag>();
-
-    // let is_reaction = {
-    //     let can_act = ecs.read_storage::<super::CanActFlag>();
-    //     let player = ecs.fetch::<Entity>();
-    //     can_act
-    //         .get(*player)
-    //         .expect("player_input called, but it is not your turn")
-    //         .is_reaction
-    // };
-
-    // if is_reaction {
-    //     can_react.remove(*player);
-    // } else {
-    //     can_react
-    //         .insert(*player, super::CanReactFlag {})
-    //         .expect("Failed to insert CanReactFlag");
-    // }
-
     can_act.clear();
+
+    // TODO: fragile things should probably also have their own schedulable to track their lifetime instead of living here
+    let mut breakables = ecs.write_storage::<super::Fragile>();
+    for fragile in (&mut breakables).join() {
+        fragile.lifetime -= 1;
+    }
 
     // clear message line
     let mut log = ecs.fetch_mut::<GameLog>();

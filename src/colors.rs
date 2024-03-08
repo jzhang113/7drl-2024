@@ -104,6 +104,10 @@ pub fn particle_hit_color() -> RGB {
     RGB::named(rltk::RED)
 }
 
+pub fn particle_stun_color() -> RGB {
+    RGB::named(rltk::DARKORANGE)
+}
+
 pub fn particle_bg_color() -> RGB {
     RGB::named(rltk::DARKRED)
 }
