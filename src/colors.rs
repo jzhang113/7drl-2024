@@ -129,7 +129,7 @@ pub fn map_shallow_water_color() -> RGB {
 }
 
 pub fn frame_startup_color() -> RGB {
-    RGB::named(rltk::GREEN)
+    RGB::named(rltk::GREEN3)
 }
 
 pub fn frame_active_color() -> RGB {

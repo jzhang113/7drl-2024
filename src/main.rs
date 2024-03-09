@@ -391,7 +391,6 @@ impl GameState for State {
         // non-map elements
         gui::sidebar::draw_sidebar(&self, ctx);
         gui::log::update_log_text(&self.ecs, ctx);
-        gui::frame_data::draw_frames(&self, ctx);
 
         match next_status {
             RunState::AwaitingInput => {
