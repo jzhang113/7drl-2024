@@ -2,6 +2,7 @@ pub mod ability_select;
 pub mod consts;
 pub mod controls;
 pub mod frame_data;
+pub mod inventory;
 pub mod log;
 pub mod map;
 pub mod overworld;

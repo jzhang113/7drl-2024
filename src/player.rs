@@ -415,6 +415,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 }
             }
             VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },
+            VirtualKeyCode::I => RunState::InventorySelect { index: 0 },
             _ => RunState::AwaitingInput,
         },
     }
@@ -723,6 +724,44 @@ pub fn ability_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> Run
     }
 
     RunState::AbilitySelect {
+        index: new_index % max_index,
+    }
+}
+
+pub fn inventory_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> RunState {
+    let mut new_index = index;
+    let max_index = gs.player_inventory.consumables.len();
+
+    match ctx.key {
+        None => {}
+        Some(key) => match key {
+            VirtualKeyCode::Up | VirtualKeyCode::Numpad8 => {
+                if new_index > 0 {
+                    new_index -= 1;
+                } else {
+                    new_index += max_index;
+                }
+            }
+            VirtualKeyCode::Down | VirtualKeyCode::Numpad2 => {
+                new_index += 1;
+            }
+            VirtualKeyCode::Escape => {
+                return RunState::AwaitingInput;
+            }
+
+            VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
+                todo!();
+            }
+            _ => {
+                let selection = rltk::letter_to_option(key) as usize;
+                if selection < max_index {
+                    todo!();
+                }
+            }
+        },
+    }
+
+    RunState::InventorySelect {
         index: new_index % max_index,
     }
 }

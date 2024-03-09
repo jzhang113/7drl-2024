@@ -20,7 +20,7 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         RGB::named(rltk::BLACK),
     );
 
-    let x = SIDE_X + 1;
+    let mut x = SIDE_X + 1;
     let mut y = SIDE_Y + 1;
 
     for (_, stamina, health) in (&players, &stams, &healths).join() {
@@ -45,103 +45,20 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         );
     }
 
-    if gs.player_charging.0 {
-        ctx.print(x, y + 2, "Charging!");
-    }
+    let state = *gs.ecs.fetch::<RunState>();
+    // Controls
+    x = SIDE_W + 2;
+    y = SIDE_H + 1;
+    // ctx.print(x, y, "Controls");
+    draw_movement_controls(ctx, x, y, text_highlight_color(), bg_color(), false);
 
-    // Quest info
-    y += 4;
-    ctx.print(x, y, "Quest:");
+    x += 11;
+    ctx.print_color(x, y, text_highlight_color(), bg_color(), 'a');
+    ctx.print(x + 1, y, "bility");
 
-    if let Some(quest) = &gs.selected_quest {
-        if quest.started {
-            match *next_state {
-                RunState::Dead { success } => {
-                    if success {
-                        ctx.print_color(
-                            x + 6,
-                            y,
-                            crate::text_success_color(),
-                            crate::bg_color(),
-                            "Complete!",
-                        );
-                    } else {
-                        ctx.print_color(
-                            x + 6,
-                            y,
-                            crate::text_failed_color(),
-                            crate::bg_color(),
-                            "Failed",
-                        );
-                    }
-
-                    ctx.print_color(x, y + 2, text_highlight_color(), bg_color(), "r");
-                    ctx.print(x + 1, y + 2, "eturn to base");
-                }
-                _ => {
-                    if !m_info.is_done() {
-                        ctx.print_color(
-                            x + 6,
-                            y,
-                            crate::text_highlight_color(),
-                            crate::bg_color(),
-                            "In prgrss",
-                        );
-                        ctx.print(x, y + 2, "Remaining");
-                        for (i, ent) in m_info.remaining.iter().enumerate() {
-                            if let Some(ent_view) = views.get(*ent) {
-                                ctx.print(x + 2, y + 4 + 2 * i as i32, ent_view.name.clone());
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            ctx.print_color(
-                x + 6,
-                y,
-                crate::text_highlight_color(),
-                crate::bg_color(),
-                "Accepted",
-            );
-            ctx.print(x, y + 2, "Targets");
-            for (i, name) in quest.spawn_info.major_monsters.iter().enumerate() {
-                ctx.print(x + 2, y + 4 + 2 * i as i32, name);
-            }
-        }
-    } else {
-        ctx.print_color(
-            x + 6,
-            y,
-            crate::text_failed_color(),
-            crate::bg_color(),
-            "None",
-        );
-    }
-
-    // Resources
-    y = 30;
-    ctx.print(x, y, format!("Money:{}z", gs.player_inventory.money));
-    ctx.print(
-        x,
-        y + 4,
-        format!("Armor:+{}", gs.player_inventory.armor_level),
-    );
-
-    // Weapon info
-    y = 38;
-    ctx.print(x, y, "Controls");
-    draw_movement_controls(ctx, x, y + 2, text_highlight_color(), bg_color(), false);
-
-    let dodge_icon_color = if crate::player::can_dodge(&gs) {
-        text_highlight_color()
-    } else {
-        text_inactive_color()
-    };
-    ctx.print_color(x, y + 4, dodge_icon_color, bg_color(), "[SPACE]");
-    ctx.print(x + 8, y + 4, "Dodge");
-
-    let player_stam = stams.get(*player).unwrap().current;
+    x += 9;
+    ctx.print_color(x, y, text_highlight_color(), bg_color(), 'i');
+    ctx.print(x + 1, y, "nventory");
 
     super::tooltip::draw_tooltips(&gs.ecs, ctx);
 }
@@ -172,8 +89,8 @@ fn draw_movement_controls(ctx: &mut Rltk, x: i32, y: i32, fg: RGB, bg: RGB, inac
     ctx.set(x + 3, y, fg, bg, 26);
 
     if inactive {
-        ctx.print_color(x + 8, y, fg, bg, "Move");
+        ctx.print_color(x + 5, y, fg, bg, "move");
     } else {
-        ctx.print(x + 8, y, "Move");
+        ctx.print(x + 5, y, "move");
     }
 }

@@ -103,6 +103,9 @@ pub enum RunState {
     AbilitySelect {
         index: usize,
     },
+    InventorySelect {
+        index: usize,
+    },
 }
 
 pub struct State {
@@ -568,6 +571,20 @@ impl GameState for State {
                 } else {
                     gui::ability_select::draw_abilities(self, ctx, index);
                     next_status = player::ability_select_input(self, ctx, index);
+
+                    if next_status == RunState::Running {
+                        player::end_turn_cleanup(&mut self.ecs);
+                    }
+                }
+            }
+            RunState::InventorySelect { index } => {
+                if self.player_inventory.consumables.is_empty() {
+                    let mut log = self.ecs.fetch_mut::<GameLog>();
+                    log.add("You have no items");
+                    next_status = RunState::Running;
+                } else {
+                    gui::inventory::draw_inventory(self, ctx, index);
+                    next_status = player::inventory_select_input(self, ctx, index);
 
                     if next_status == RunState::Running {
                         player::end_turn_cleanup(&mut self.ecs);
