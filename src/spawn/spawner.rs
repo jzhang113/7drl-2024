@@ -132,7 +132,6 @@ pub fn build_player(ecs: &mut World, point: Point) -> Entity {
             dirty: true,
             range: 20,
         })
-        .with(CanReactFlag)
         //.with(BlocksTile)
         .with(Health {
             current: 10,
@@ -173,34 +172,13 @@ pub fn build_enemy_base(ecs: &mut World) -> EntityBuilder {
 }
 
 pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
-    let part_list = vec![
-        MonsterPart {
-            symbol_map: HashMap::from([
-                (rltk::Point::new(-1, 0), rltk::to_cp437('│')),
-                (rltk::Point::new(-1, 1), rltk::to_cp437('└')),
-                (rltk::Point::new(0, 1), rltk::to_cp437('─')),
-            ]),
-            health: 4,
-            max_health: 4,
-        },
-        MonsterPart {
-            symbol_map: HashMap::from([
-                (rltk::Point::new(0, -1), rltk::to_cp437('─')),
-                (rltk::Point::new(1, -1), rltk::to_cp437('┐')),
-                (rltk::Point::new(1, 0), rltk::to_cp437('│')),
-            ]),
-            health: 4,
-            max_health: 4,
-        },
-    ];
-
     build_enemy_base(ecs)
         .with(Position {
             x: point.x,
             y: point.y,
         })
         .with(Renderable {
-            symbol: rltk::to_cp437('x'),
+            symbol: rltk::to_cp437('X'),
             fg: RGB::named(rltk::LIGHT_BLUE),
             bg: RGB::named(rltk::BLACK),
             zindex: 1,
@@ -218,10 +196,6 @@ pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
             moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
             bump_attack: AttackType::Melee,
         })
-        .with(MultiTile {
-            bounds: all_bounds(&part_list),
-            part_list: part_list,
-        })
         .with(Facing {
             direction: crate::Direction::N,
         })
@@ -229,32 +203,13 @@ pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
 }
 
 pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
-    let part_list = vec![
-        MonsterPart {
-            symbol_map: HashMap::from([
-                (rltk::Point::new(1, 0), rltk::to_cp437('─')),
-                (rltk::Point::new(2, 1), rltk::to_cp437('\\')),
-            ]),
-            health: 1,
-            max_health: 1,
-        },
-        MonsterPart {
-            symbol_map: HashMap::from([
-                (rltk::Point::new(-1, 0), rltk::to_cp437('─')),
-                (rltk::Point::new(-2, 1), rltk::to_cp437('/')),
-            ]),
-            health: 1,
-            max_health: 1,
-        },
-    ];
-
     build_enemy_base(ecs)
         .with(Position {
             x: point.x,
             y: point.y,
         })
         .with(Renderable {
-            symbol: rltk::to_cp437('x'),
+            symbol: rltk::to_cp437('X'),
             fg: RGB::named(rltk::LIGHT_BLUE),
             bg: RGB::named(rltk::BLACK),
             zindex: 1,
@@ -272,10 +227,6 @@ pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
             moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
             bump_attack: AttackType::Melee,
         })
-        .with(MultiTile {
-            bounds: all_bounds(&part_list),
-            part_list: part_list,
-        })
         .with(Facing {
             direction: crate::Direction::N,
         })
@@ -283,29 +234,6 @@ pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
 }
 
 pub fn build_archer(ecs: &mut World, point: Point) -> Entity {
-    let part_list = vec![
-        MonsterPart {
-            symbol_map: HashMap::from([(rltk::Point::new(-1, 0), rltk::to_cp437('<'))]),
-            health: 2,
-            max_health: 2,
-        },
-        MonsterPart {
-            symbol_map: HashMap::from([(rltk::Point::new(0, 1), rltk::to_cp437('v'))]),
-            health: 2,
-            max_health: 2,
-        },
-        MonsterPart {
-            symbol_map: HashMap::from([(rltk::Point::new(1, 0), rltk::to_cp437('>'))]),
-            health: 2,
-            max_health: 2,
-        },
-        MonsterPart {
-            symbol_map: HashMap::from([(rltk::Point::new(0, -1), rltk::to_cp437('^'))]),
-            health: 2,
-            max_health: 2,
-        },
-    ];
-
     build_enemy_base(ecs)
         .with(Position {
             x: point.x,
@@ -323,10 +251,6 @@ pub fn build_archer(ecs: &mut World, point: Point) -> Entity {
             seen: false,
         })
         .with(Health { current: 6, max: 6 })
-        .with(MultiTile {
-            bounds: all_bounds(&part_list),
-            part_list: part_list,
-        })
         .with(Moveset {
             moves: vec![
                 (AttackType::Melee, 0.25),

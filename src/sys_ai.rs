@@ -7,8 +7,7 @@ pub enum Behavior {
     Wander,
     Chase { target_point: rltk::Point },
     Attack { info: AttackInfo },
-    AttackStartup { turns_left: u32, info: AttackInfo },
-    AttackRecovery { turns_left: u32, info: AttackInfo },
+    AttackRecovery,
     Flee,
 }
 
@@ -188,11 +187,10 @@ impl AiSystem {
                                 orig_point,
                                 data.player_point,
                             ) {
-                                data.state.status = Behavior::AttackStartup {
-                                    turns_left: crate::attack_type::get_startup(*potential_attack),
+                                data.state.status = Behavior::Attack {
                                     info: AttackInfo {
                                         attack_type: *potential_attack,
-                                        attack_loc: attack_loc,
+                                        attack_loc,
                                     },
                                 };
                                 attack_found = true;
@@ -209,18 +207,6 @@ impl AiSystem {
                         return Self::move_towards(target_point, data);
                     }
                 }
-                Behavior::AttackStartup { turns_left, info } => {
-                    if turns_left > 0 {
-                        data.state.status = Behavior::AttackStartup {
-                            turns_left: turns_left - 1,
-                            info,
-                        };
-
-                        return crate::get_startup_action(info.attack_type, turns_left as usize);
-                    } else {
-                        data.state.status = Behavior::Attack { info };
-                    }
-                }
                 Behavior::Attack { info } => {
                     let intent = crate::attack_type::get_attack_intent(
                         info.attack_type,
@@ -229,29 +215,17 @@ impl AiSystem {
                     );
                     let frame = crate::attack_type::get_frame_data(info.attack_type);
 
-                    data.state.status = Behavior::AttackRecovery {
-                        turns_left: crate::attack_type::get_recovery(info.attack_type),
-                        info,
-                    };
+                    data.state.status = Behavior::AttackRecovery;
 
                     return NextIntent::Attack { intent, frame };
                 }
-                Behavior::AttackRecovery { turns_left, info } => {
-                    if turns_left > 0 {
-                        data.state.status = Behavior::AttackRecovery {
-                            turns_left: turns_left - 1,
-                            info,
+                Behavior::AttackRecovery => {
+                    if Self::can_see_target(data.viewshed, data.player_point) {
+                        data.state.status = Behavior::Chase {
+                            target_point: data.player_point,
                         };
-
-                        return crate::get_recovery_action(info.attack_type, turns_left as usize);
                     } else {
-                        if Self::can_see_target(data.viewshed, data.player_point) {
-                            data.state.status = Behavior::Chase {
-                                target_point: data.player_point,
-                            };
-                        } else {
-                            data.state.status = Behavior::Wander;
-                        }
+                        data.state.status = Behavior::Wander;
                     }
                 }
                 Behavior::Flee => {

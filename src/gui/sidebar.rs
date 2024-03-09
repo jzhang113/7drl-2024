@@ -100,7 +100,7 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
             continue;
         }
 
-        y += 1;
+        y += 3;
         ctx.set(x, y, rend.fg, rend.bg, rend.symbol);
         if adjusted_point.x == pos.x && adjusted_point.y == pos.y {
             ctx.print_color(
@@ -129,8 +129,7 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         }
 
         if let Some(frame) = frame {
-            y += 1;
-            gui::frame_data::print_frame_state(ctx, frame, x as u32, y as u32);
+            gui::frame_data::print_frame_state(ctx, frame, x as u32, y as u32 + 1);
         }
     }
 
