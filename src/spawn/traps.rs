@@ -20,7 +20,7 @@ pub fn build_arrow_trap(ecs: &mut World, point: Point) -> Entity {
             y: point.y,
         })
         .with(Renderable {
-            symbol: 't' as u16,
+            symbol: 'T' as u16,
             fg: RGB::named(rltk::GREEN),
             bg: bg_color(),
             zindex: 1,

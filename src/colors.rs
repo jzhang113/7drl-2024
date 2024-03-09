@@ -143,3 +143,7 @@ pub fn frame_recovery_color() -> RGB {
 pub fn frame_current_color() -> RGB {
     RGB::named(rltk::RED)
 }
+
+pub fn facing_indicator_color() -> RGB {
+    RGB::named(rltk::RED3)
+}

@@ -82,21 +82,6 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
     )
         .join()
     {
-        let symbol = if let Some(facing) = facing {
-            if ent != *player {
-                match facing.direction {
-                    Direction::N => rltk::to_cp437('^'),
-                    Direction::E => rltk::to_cp437('>'),
-                    Direction::S => rltk::to_cp437('v'),
-                    Direction::W => rltk::to_cp437('<'),
-                }
-            } else {
-                render.symbol
-            }
-        } else {
-            render.symbol
-        };
-
         if map.visible_tiles[map.get_index(pos.x, pos.y)] || SHOW_REND {
             set_map_tile_with_bg(
                 ctx,
@@ -104,8 +89,29 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
                 &pos.as_point(),
                 render.fg,
                 render.bg,
-                symbol,
+                render.symbol,
             );
+
+            if let Some(facing) = facing {
+                if ent != *player {
+                    let facing_symbol = match facing.direction {
+                        Direction::N => 3,
+                        Direction::E => 5,
+                        Direction::S => 4,
+                        Direction::W => 6,
+                    };
+
+                    ctx.set_active_console(2);
+                    set_map_tile(
+                        ctx,
+                        &map.camera.origin,
+                        &pos.as_point(),
+                        facing_indicator_color(),
+                        facing_symbol,
+                    );
+                    ctx.set_active_console(1);
+                }
+            };
         }
 
         if let Some(mtt) = mtt {
