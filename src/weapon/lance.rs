@@ -10,10 +10,7 @@ pub enum LanceAttack {
 
 pub fn get_attack_data(attack: LanceAttack) -> AttackData {
     let needs_target = match attack {
-        LanceAttack::Sweep => true,
-        LanceAttack::DrawAttack => true,
-        LanceAttack::Hook => true,
-        _ => false,
+        _ => true,
     };
 
     let needs_path = match attack {
@@ -25,26 +22,26 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
     let name = match attack {
         LanceAttack::DrawAttack => "Suplex",
         LanceAttack::Hook => "Hook",
-        LanceAttack::Charge => "Walls",
-        LanceAttack::Sweep => "Bomb",
+        LanceAttack::Charge => "Vault",
+        LanceAttack::Sweep => "Exploding Bolt",
     }
     .to_string();
 
     let stam_cost = match attack {
-        LanceAttack::DrawAttack => 1,
-        LanceAttack::Hook => 1,
-        LanceAttack::Charge => 2,
-        LanceAttack::Sweep => 3,
+        LanceAttack::DrawAttack => 3,
+        LanceAttack::Hook => 4,
+        LanceAttack::Charge => 6,
+        LanceAttack::Sweep => 2,
     };
 
     let attack_type = match attack {
-        LanceAttack::Sweep => AttackType::RangedArea {
-            radius: 6,
-            explosion_size: 2,
+        LanceAttack::Sweep => AttackType::ProjectileArea {
+            radius: 4,
+            explosion_size: 1,
         },
         LanceAttack::DrawAttack => AttackType::AdvancingFlip { range: 2 },
-        LanceAttack::Hook => AttackType::Hook { radius: 6 },
-        LanceAttack::Charge => AttackType::Barrier,
+        LanceAttack::Hook => AttackType::Hook { radius: 4 },
+        LanceAttack::Charge => AttackType::Dodge { radius: 3 },
     };
 
     // TODO: Commenting this out so we don't use the wrong framedata

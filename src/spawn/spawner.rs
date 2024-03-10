@@ -1,5 +1,5 @@
 use crate::*;
-use rltk::{Point};
+use rltk::Point;
 use std::collections::HashMap;
 
 const MAX_MONSTERS: i32 = 4;
@@ -9,6 +9,7 @@ type Spawner = Box<for<'r> fn(&'r mut World, Point) -> Entity>;
 lazy_static! {
     pub static ref MONSTERS: HashMap<String, (i32, Spawner)> = load_monster_table();
     pub static ref DIFF_MAP: HashMap<i32, Vec<String>> = load_difficulty_map();
+    pub static ref ITEMS: HashMap<String, (i32, Spawner)> = load_item_table();
 }
 
 fn load_monster_table() -> HashMap<String, (i32, Spawner)> {
@@ -68,20 +69,28 @@ fn load_monster_table() -> HashMap<String, (i32, Spawner)> {
         "Assassin".to_string(),
         (3, Box::new(super::melee::build_assassin)),
     );
-    table.insert("Potion".to_string(), (0, Box::new(build_health_potion)));
-    table.insert(
-        "Scroll of Earth".to_string(),
-        (0, Box::new(build_earth_scroll)),
-    );
 
     table
 }
 
 fn load_difficulty_map() -> HashMap<i32, Vec<String>> {
     let mut table = HashMap::new();
-    let lvl1 = vec!["Archer".to_string(), "Novice".to_string(), "Trainee".to_string()];
-    let lvl2 = vec!["Sharpshooter".to_string(), "Electromancer".to_string(), "Berserker".to_string()];
-    let lvl3 = vec!["Cannoneer".to_string(), "Pyromancer".to_string(), "Warrior".to_string(), "Assassin".to_string()];
+    let lvl1 = vec![
+        "Archer".to_string(),
+        "Novice".to_string(),
+        "Trainee".to_string(),
+    ];
+    let lvl2 = vec![
+        "Sharpshooter".to_string(),
+        "Electromancer".to_string(),
+        "Berserker".to_string(),
+    ];
+    let lvl3 = vec![
+        "Cannoneer".to_string(),
+        "Pyromancer".to_string(),
+        "Warrior".to_string(),
+        "Assassin".to_string(),
+    ];
     let lvl4 = vec!["Juggernaut".to_string()];
 
     table.insert(1, lvl1);
@@ -92,9 +101,34 @@ fn load_difficulty_map() -> HashMap<i32, Vec<String>> {
     table
 }
 
-pub fn build_from_name(ecs: &mut World, name: &String, index: usize) -> Option<Entity> {
+fn load_item_table() -> HashMap<String, (i32, Spawner)> {
+    let mut table = HashMap::new();
+    table.insert(
+        "Potion".to_string(),
+        (
+            0,
+            Box::new(
+                build_health_potion
+                    as for<'r> fn(&'r mut specs::World, rltk::Point) -> specs::Entity,
+            ),
+        ),
+    );
+    table.insert(
+        "Scroll of Earth".to_string(),
+        (0, Box::new(build_earth_scroll)),
+    );
+
+    table
+}
+
+fn build_from_name(ecs: &mut World, name: &String, index: usize) -> Option<Entity> {
     let point = { ecs.fetch::<Map>().index_to_point2d(index) };
     MONSTERS.get(name).map(|(_, builder)| builder(ecs, point))
+}
+
+fn build_item_from_name(ecs: &mut World, name: &String, index: usize) -> Option<Entity> {
+    let point = { ecs.fetch::<Map>().index_to_point2d(index) };
+    ITEMS.get(name).map(|(_, builder)| builder(ecs, point))
 }
 
 /// Fills a region with stuff!
@@ -120,15 +154,16 @@ pub fn spawn_region(ecs: &mut World, area: &[usize], difficulty: i32) -> i32 {
                 }
 
                 let rand_index = rng.range(0, valid_spawns.len());
-                *valid_spawns.iter().nth(rand_index).unwrap()
+                *valid_spawns.get(rand_index).unwrap()
             } else {
                 let rand_index = rng.range(0, super::spawner::MONSTERS.len());
-                let (name, (difficulty, _)) = super::spawner::MONSTERS.iter().nth(rand_index).unwrap();
+                let (name, (difficulty, _)) =
+                    super::spawner::MONSTERS.iter().nth(rand_index).unwrap();
                 (name, *difficulty)
             };
 
             if areas.is_empty() {
-                println!("we shouldn't be calling spawn region for here");
+                dbg!("we shouldn't be calling spawn region for here");
                 break;
             } else {
                 curr_difficulty += spawn_diff;
@@ -168,30 +203,36 @@ fn spawn_items(ecs: &mut World, areas: &mut Vec<usize>, difficulty: i32) {
     {
         let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
         let item_chance = rng.rand::<f32>();
-        if item_chance < 0.3 {
-            let item_type = rng.range(0, 2);
-            let item_name = match item_type {
-                0 => "Potion",
-                1 => "Scroll of Earth",
-                _ => unreachable!(),
-            };
+        for _ in 0..((difficulty + 1) / 2) {
+            if item_chance < 0.3 {
+                let item_type = rng.range(0, 2);
+                let item_name = match item_type {
+                    0 => "Potion",
+                    1 => "Scroll of Earth",
+                    _ => unreachable!(),
+                };
 
-            if areas.is_empty() {
-                println!("we shouldn't be calling spawn region for here");
-            } else {
-                let array_index = rng.range(0, areas.len());
-                let map_idx = areas[array_index];
-                spawn_points.insert(map_idx, item_name.to_string());
-                areas.remove(array_index);
+                if areas.is_empty() {
+                    dbg!("we shouldn't be calling spawn region for here");
+                    break;
+                } else {
+                    let array_index = rng.range(0, areas.len());
+                    let map_idx = areas[array_index];
+                    spawn_points.insert(map_idx, item_name.to_string());
+                    areas.remove(array_index);
+                }
             }
         }
     }
 
     for (map_idx, name) in spawn_points.iter() {
-        let entity = build_from_name(ecs, name, *map_idx);
+        let entity = build_item_from_name(ecs, name, *map_idx);
 
         // track the entity if we built one
         if let Some(entity) = entity {
+            dbg!(map_idx);
+            dbg!(name);
+
             let mut map = ecs.fetch_mut::<Map>();
             map.track_item(entity, *map_idx);
         }
@@ -282,7 +323,7 @@ pub fn build_health_potion(ecs: &mut World, point: Point) -> Entity {
             y: point.y,
         })
         .with(crate::Renderable {
-            symbol: rltk::to_cp437('!'),
+            symbol: 173_u16,
             fg: crate::health_color(),
             bg: crate::bg_color(),
             zindex: 0,

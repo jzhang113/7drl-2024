@@ -76,7 +76,7 @@ pub fn build_berserker(ecs: &mut World, point: Point) -> Entity {
         .with(Moveset {
             moves: vec![
                 (AttackType::MeleeKnockback, 0.25),
-                (AttackType::MeleeArea { radius: 3 }, 0.75),
+                (AttackType::MeleeArea { radius: 1 }, 0.75),
             ],
             bump_attack: AttackType::Melee2,
         })

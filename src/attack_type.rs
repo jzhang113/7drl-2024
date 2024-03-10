@@ -120,7 +120,7 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
         AttackType::AdvancingFlip { range } => RangeType::Cross { size: range },
         AttackType::Barrier => RangeType::Single,
         AttackType::Hook { radius } => RangeType::Square { size: radius },
-        AttackType::Dodge { radius } => RangeType::Square { size: radius },
+        AttackType::Dodge { radius } => RangeType::Diamond { size: radius },
         AttackType::Recover => RangeType::Single,
     }
 }
@@ -139,9 +139,17 @@ pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
 
 pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::MeleeArea { .. } => 25,
-        AttackType::MeleeStun => 2,
+        AttackType::MeleeArea { radius } => 10 + 4 * radius as u32,
+        AttackType::MeleeStun => 4,
         AttackType::OnProjectileAreaHit { .. } => 0,
+        AttackType::ProjectileStun { .. } => 16,
+        AttackType::ProjectileArea { .. } => 22,
+        AttackType::Ranged { .. } => 12,
+        AttackType::RangedStun { .. } => 12,
+        AttackType::RangedArea { .. } => 16,
+        AttackType::AdvancingFlip { .. } => 6,
+        AttackType::AdvancingKnockback { .. } => 6,
+        AttackType::Dodge { .. } => 3,
         _ => 10,
     }
 }
@@ -154,6 +162,11 @@ pub fn get_active(attack_type: AttackType) -> u32 {
 
 pub fn get_recovery(attack_type: AttackType) -> u32 {
     match attack_type {
+        AttackType::MeleeStun => 24,
+        AttackType::Ranged { .. } => 12,
+        AttackType::RangedStun { .. } => 16,
+        AttackType::RangedArea { .. } => 20,
+        AttackType::Dodge { .. } => 5,
         _ => 10,
     }
 }
@@ -163,7 +176,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
     match attack_type {
         AttackType::Melee => vec![Damage { amount: 1 }],
         AttackType::Melee2 => vec![Damage { amount: 2 }],
-        AttackType::MeleeKnockback => vec![Damage { amount: 1 }, Knockback { amount: 2 }],
+        AttackType::MeleeKnockback => vec![Damage { amount: 1 }, Knockback { amount: 1 }],
         AttackType::MeleeStun => vec![Stun { duration: 10 }],
         AttackType::MeleeArea { .. } => vec![Damage { amount: 2 }],
         AttackType::Projectile { .. } => vec![FollowsPath {
@@ -178,12 +191,17 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
             step_delay: 3,
             on_hit: AttackType::MeleeStun,
         }],
-        AttackType::ProjectileArea { explosion_size, .. } => vec![FollowsPath {
-            step_delay: 3,
-            on_hit: AttackType::OnProjectileAreaHit {
-                radius: explosion_size,
+        AttackType::ProjectileArea { explosion_size, .. } => vec![
+            FollowsPath {
+                step_delay: 3,
+                on_hit: AttackType::OnProjectileAreaHit {
+                    radius: explosion_size,
+                },
             },
-        }],
+            NeedsStamina {
+                amount: crate::player::BOLT_STAM_REQ,
+            },
+        ],
         AttackType::OnProjectileAreaHit { .. } => vec![Damage { amount: 2 }],
         AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
         AttackType::RangedStun { .. } => vec![Damage { amount: 1 }, Stun { duration: 10 }],
@@ -200,13 +218,18 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
                 pass_over: true,
             },
             Movement { delay: 1 },
+            NeedsStamina {
+                amount: crate::player::SUPLEX_STAM_REQ,
+            },
         ],
         AttackType::Barrier => vec![CreatesWalls],
         AttackType::Hook { radius } => vec![
-            Damage { amount: 1 },
             Pull {
                 amount: radius - 1,
                 pass_over: false,
+            },
+            NeedsStamina {
+                amount: crate::player::HOOK_STAM_REQ,
             },
         ],
         AttackType::Dodge { .. } => vec![

@@ -1,8 +1,10 @@
 use crate::*;
 use rltk::{Point, VirtualKeyCode};
 
-pub const DODGE_STAM_REQ: i32 = 3;
-pub const CHARGE_STAM_REQ: i32 = 2;
+pub const DODGE_STAM_REQ: i32 = 6;
+pub const HOOK_STAM_REQ: i32 = 3;
+pub const SUPLEX_STAM_REQ: i32 = 2;
+pub const BOLT_STAM_REQ: i32 = 2;
 
 fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
     use std::cmp::{max, min};
@@ -138,6 +140,8 @@ fn handle_attack(gs: &mut State, data: AttackData) -> RunState {
     let stamina = stams.get_mut(*player).unwrap();
 
     if data.stam_cost > stamina.current {
+        let mut log = gs.ecs.fetch_mut::<GameLog>();
+        log.add("You're too exhausted for that");
         return RunState::AwaitingInput;
     }
 
@@ -292,11 +296,11 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             let player = gs.ecs.fetch::<Entity>();
             let stamina = stams.get_mut(*player).unwrap();
 
-            if stamina.current < CHARGE_STAM_REQ {
+            if stamina.current < HOOK_STAM_REQ {
                 gs.player_charging.0 = false;
                 return RunState::Running;
             } else {
-                stamina.current -= CHARGE_STAM_REQ;
+                stamina.current -= HOOK_STAM_REQ;
                 stamina.recover = false;
             }
         }
@@ -406,29 +410,16 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 next_state
             }
             VirtualKeyCode::Period => RunState::Running,
-            // VirtualKeyCode::D => {
-            //     // TODO: For testing, remove
-            //     return RunState::Dead { success: true };
-            // }
-            // VirtualKeyCode::V => RunState::ViewEnemy { index: 0 },
-            VirtualKeyCode::Space => {
-                if !can_dodge(gs) {
-                    RunState::AwaitingInput
-                } else {
-                    let p = {
-                        let player = gs.ecs.fetch::<Entity>();
-                        let pos = gs.ecs.read_storage::<Position>();
-                        pos.get(*player).unwrap().as_point()
-                    };
-
-                    return RunState::Targetting {
-                        attack_type: AttackType::Dodge { radius: 2 },
-                        cursor_point: p,
-                        validity_mode: crate::TargettingValid::Unblocked,
-                        show_path: true,
-                    };
-                }
+            VirtualKeyCode::P => {
+                gs.spawn_exit();
+                RunState::AwaitingInput
             }
+            VirtualKeyCode::D => {
+                // TODO: For testing, remove
+                // return RunState::Dead { success: true };
+                return RunState::GenerateLevel;
+            }
+            // VirtualKeyCode::V => RunState::ViewEnemy { index: 0 },
             VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },
             // VirtualKeyCode::I => RunState::InventorySelect { index: 0 },
             VirtualKeyCode::V => RunState::ViewGameLog,
