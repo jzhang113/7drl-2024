@@ -84,7 +84,9 @@ pub enum RunState {
         remaining_time: f32,
     },
     GenerateLevel,
-    ChangeMap,
+    ChangeMap {
+        level: u32,
+    },
     Shop,
     Blacksmith,
     Dead {
@@ -168,7 +170,14 @@ impl State {
         let mut rng = rltk::RandomNumberGenerator::new();
 
         // Add a dummy map and player to the ecs
-        let map = Map::new(1, 1, &"Dummy".to_string(), &"#FFFFFF".to_string(), &mut rng);
+        let map = Map::new(
+            1,
+            1,
+            0,
+            &"Dummy".to_string(),
+            &"#FFFFFF".to_string(),
+            &mut rng,
+        );
         self.ecs.insert(map);
 
         let player = spawn::spawner::build_player(&mut self.ecs, rltk::Point::new(0, 0));
@@ -245,16 +254,20 @@ impl State {
     }
 
     fn load_overworld(&mut self) {
-        self.new_level(Some(MapBuilderArgs {
-            builder_type: 4,
-            width: 20,
-            height: 20,
-            name: "Base".to_string(),
-            map_color: "#D4BF8E".to_string(),
-        }))
+        self.new_level(
+            0,
+            Some(MapBuilderArgs {
+                builder_type: 4,
+                width: 20,
+                height: 20,
+                level: 0,
+                name: "Base".to_string(),
+                map_color: "#D4BF8E".to_string(),
+            }),
+        )
     }
 
-    fn new_level(&mut self, map_builder_args: Option<MapBuilderArgs>) {
+    fn new_level(&mut self, difficulty: u32, map_builder_args: Option<MapBuilderArgs>) {
         // Delete entities that aren't the player or his/her equipment
         let to_delete = self.entities_need_cleanup();
         for target in to_delete {
@@ -267,7 +280,7 @@ impl State {
         let mut map_builder = if let Some(args) = map_builder_args {
             map_builder::with_builder(&args)
         } else {
-            map_builder::random_builder(80, 50, "-".to_string())
+            map_builder::random_builder(80, 50, difficulty, "-".to_string())
         };
 
         let new_map = {
@@ -443,17 +456,14 @@ impl GameState for State {
                 }
             }
             RunState::GenerateLevel => {
-                self.new_level(None);
+                self.new_level(1, None);
                 sys_visibility::VisibilitySystem.run_now(&self.ecs);
-
                 next_status = RunState::AwaitingInput;
             }
-            RunState::ChangeMap => {
-                // TODO: support multi-level maps
-                unreachable!();
-                // update visibility immediately so the screen isn't dark for a cycle
-                // sys_visibility::VisibilitySystem.run_now(&self.ecs);
-                // next_status = RunState::AwaitingInput;
+            RunState::ChangeMap { level } => {
+                self.new_level(level, None);
+                sys_visibility::VisibilitySystem.run_now(&self.ecs);
+                next_status = RunState::AwaitingInput;
             }
             RunState::Dead { success } => match ctx.key {
                 None => {}

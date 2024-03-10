@@ -24,7 +24,11 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
         let dest_index = map.get_index(new_x, new_y);
 
         match map.tiles[dest_index] {
-            TileType::DownStairs => return RunState::ChangeMap,
+            TileType::DownStairs => {
+                return RunState::ChangeMap {
+                    level: map.level + 1,
+                }
+            }
             TileType::NewLevel => return RunState::GenerateLevel,
             _ => {}
         }
@@ -652,42 +656,6 @@ pub fn view_input(gs: &mut State, ctx: &mut Rltk, index: u32) -> RunState {
 
     RunState::ViewEnemy {
         index: new_index % (max_index + 1),
-    }
-}
-
-pub fn mission_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> RunState {
-    let mut new_index = index;
-    let max_index = gs.quests.entries.len();
-
-    match ctx.key {
-        None => {}
-        Some(key) => match key {
-            VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => {
-                if new_index > 0 {
-                    new_index -= 1;
-                } else {
-                    new_index += max_index;
-                }
-            }
-            VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
-                new_index += 1;
-            }
-            VirtualKeyCode::Escape => {
-                return RunState::Running;
-            }
-            VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
-                gs.selected_quest = Some(gs.quests.entries[index].clone());
-                return RunState::Running;
-            }
-            VirtualKeyCode::A => {
-                gs.selected_quest = None;
-            }
-            _ => {}
-        },
-    }
-
-    RunState::MissionSelect {
-        index: new_index % max_index,
     }
 }
 

@@ -38,6 +38,7 @@ impl BuilderMap {
 pub struct MapBuilderArgs {
     pub width: i32,
     pub height: i32,
+    pub level: u32,
     pub builder_type: usize,
     pub name: String,
     pub map_color: String,
@@ -55,7 +56,14 @@ impl BuilderChain {
             starter: None,
             builders: Vec::new(),
             build_data: BuilderMap {
-                map: Map::new(args.width, args.height, &args.name, &args.map_color, rng),
+                map: Map::new(
+                    args.width,
+                    args.height,
+                    args.level,
+                    &args.name,
+                    &args.map_color,
+                    rng,
+                ),
                 starting_position: Position { x: 0, y: 0 },
                 history: Vec::new(),
                 noise_areas: HashMap::new(),
@@ -142,7 +150,7 @@ pub trait MetaMapBuilder {
     fn build_map(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator);
 }
 
-pub fn random_builder(width: i32, height: i32, name: String) -> BuilderChain {
+pub fn random_builder(width: i32, height: i32, level: u32, name: String) -> BuilderChain {
     let mut rng = rltk::RandomNumberGenerator::new();
     let builder_type = rng.roll_dice(0, 3);
     println!("Building map type {}", builder_type);
@@ -151,6 +159,7 @@ pub fn random_builder(width: i32, height: i32, name: String) -> BuilderChain {
         builder_type: builder_type as usize,
         width,
         height,
+        level,
         name,
         map_color: "#FFFFFF".to_string(),
     })
