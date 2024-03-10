@@ -25,7 +25,9 @@ impl<'a> System<'a> for ProjectileSystem {
             }
 
             if attack_path.index >= attack_path.path.len() {
-                finished.push((ent, attack_path.on_hit, *attack_path.path.last().unwrap()));
+                if let Some(final_point) = attack_path.path.last() {
+                    finished.push((ent, attack_path.on_hit, *final_point));
+                }
                 continue;
             }
 

@@ -266,6 +266,7 @@ impl AiSystem {
 
         match path {
             None => {
+                // TODO: this state lags the game, presumably because we recompute a bunch of expensive a* paths
                 if let Some(path) = &data.state.prev_path {
                     if data.state.path_step < path.steps.len() {
                         let next_pos = data.map.index_to_point2d(path.steps[data.state.path_step]);

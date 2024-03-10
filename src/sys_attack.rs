@@ -96,11 +96,22 @@ impl<'a> System<'a> for AttackSystem {
                                 // if we collide into something, rewind the attempted movement
                                 // and insert a stun
                                 if !map.is_tile_valid(next_x, next_y) {
-                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                    if let Some(collided_ent) =
+                                        map.creature_map.get(&map.get_index(next_x, next_y))
+                                    {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);
                                         }
+
+                                        stuns
+                                            .insert(
+                                                *collided_ent,
+                                                crate::Stunned {
+                                                    duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                                },
+                                            )
+                                            .ok();
                                     }
 
                                     if let Some(view) = viewables.get(ent_hit) {
@@ -110,7 +121,7 @@ impl<'a> System<'a> for AttackSystem {
                                             } else {
                                                 log.add(format!(
                                                     "A {} is knocked into something",
-                                                view.name.to_lowercase()
+                                                    view.name.to_lowercase()
                                                 ));
                                             }
                                         }
@@ -147,7 +158,7 @@ impl<'a> System<'a> for AttackSystem {
                                             } else {
                                                 log.add(format!(
                                                     "A {} is knocked into the water",
-                                                view.name.to_lowercase()
+                                                    view.name.to_lowercase()
                                                 ));
                                             }
                                         }
@@ -198,11 +209,23 @@ impl<'a> System<'a> for AttackSystem {
                                 if !map.is_tile_valid(next_x, next_y)
                                     || (!pass_over && next_x == src_pos.x && next_y == src_pos.y)
                                 {
-                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                    if let Some(collided_ent) =
+                                        map.creature_map.get(&map.get_index(next_x, next_y))
+                                    {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);
                                         }
+
+                                        stuns
+                                            .insert(
+                                                *collided_ent,
+                                                crate::Stunned {
+                                                    duration: crate::consts::WALL_HIT_STUN_DURATION,
+                                                },
+                                            )
+                                            .ok();
+                                        break;
                                     }
 
                                     next_x -= offset.x;
@@ -279,7 +302,11 @@ impl<'a> System<'a> for AttackSystem {
                                         if ent_hit == *player {
                                             log.add(format!("You are hit for {}", amount));
                                         } else {
-                                            log.add(format!("A {} is hit for {}", view.name.to_lowercase(), amount));
+                                            log.add(format!(
+                                                "A {} is hit for {}",
+                                                view.name.to_lowercase(),
+                                                amount
+                                            ));
                                         }
                                     }
                                 }

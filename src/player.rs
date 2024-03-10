@@ -411,15 +411,15 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 next_state
             }
             VirtualKeyCode::Period => RunState::Running,
-            VirtualKeyCode::P => {
-                gs.spawn_exit();
-                RunState::AwaitingInput
-            }
-            VirtualKeyCode::D => {
-                // TODO: For testing, remove
-                // return RunState::Dead { success: true };
-                return RunState::GenerateLevel;
-            }
+            // VirtualKeyCode::P => {
+            //     gs.spawn_exit();
+            //     RunState::AwaitingInput
+            // }
+            // VirtualKeyCode::D => {
+            //     // TODO: For testing, remove
+            //     // return RunState::Dead { success: true };
+            //     return RunState::GenerateLevel;
+            // }
             // VirtualKeyCode::V => RunState::ViewEnemy { index: 0 },
             VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },
             // VirtualKeyCode::I => RunState::InventorySelect { index: 0 },
