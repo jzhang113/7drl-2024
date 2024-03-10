@@ -5,7 +5,7 @@ rltk::embedded_resource!(FONT, "../resources/Zilk-16x16.png");
 rltk::embedded_resource!(ICONS, "../resources/custom_icons.png");
 
 use crate::map_builder::MapBuilderArgs;
-use rltk::{GameState, Rltk, RGB};
+use rltk::{Algorithm2D, GameState, Rltk, RGB};
 use specs::prelude::*;
 
 mod attack_type;
@@ -322,6 +322,55 @@ impl State {
         }
     }
 
+    // spawn an exit near the player if less than 10% of enemies remain
+    fn should_spawn_exit(&self) -> bool {
+        let map = self.ecs.fetch::<Map>();
+        if map.exit_spawned {
+            return false;
+        }
+
+        let total = map.initial_spawns;
+        let healths = self.ecs.read_storage::<Health>();
+        let positions = self.ecs.read_storage::<Position>();
+        let mut remaining = 0;
+        for _ in (&healths, &positions).join() {
+            remaining += 1;
+        }
+
+        if remaining <= 1 {
+            true
+        } else {
+            remaining - 1 <= total / 10
+        }
+    }
+
+    fn spawn_exit(&mut self) {
+        let mut map = self.ecs.fetch_mut::<Map>();
+        let mut log = self.ecs.fetch_mut::<GameLog>();
+        let mut rng = self.ecs.fetch_mut::<rltk::RandomNumberGenerator>();
+
+        let player = self.ecs.fetch::<Entity>();
+        let positions = self.ecs.read_storage::<Position>();
+        let player_pos = positions.get(*player).unwrap().as_point();
+        let exit_locs: Vec<usize> =
+            range_type::resolve_range_at(&RangeType::Diamond { size: 2 }, player_pos)
+                .into_iter()
+                .filter(|p| map.in_bounds(*p))
+                .map(|p| map.get_index(p.x, p.y))
+                .filter(|idx| !map.blocked_tiles[*idx] && map.tiles[*idx] != TileType::Water)
+                .collect();
+
+        if !exit_locs.is_empty() {
+            let random_idx = rng.range(0, exit_locs.len());
+            let random_loc = exit_locs[random_idx];
+            map.tiles[random_loc] = TileType::DownStairs;
+            log.add("An exit portal has appeared!");
+        } else {
+            // more robust handling for this
+            unreachable!();
+        }
+    }
+
     fn reset_player(&mut self) {
         let player = self.ecs.fetch::<Entity>();
         let mut healths = self.ecs.write_storage::<Health>();
@@ -373,6 +422,10 @@ impl GameState for State {
 
                 if next_status == RunState::Running {
                     player::end_turn_cleanup(&mut self.ecs);
+
+                    if self.should_spawn_exit() {
+                        self.spawn_exit();
+                    }
                 }
             }
             RunState::Charging { dir, speed } => {

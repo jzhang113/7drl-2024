@@ -98,6 +98,7 @@ impl BuilderChain {
     }
 
     pub fn spawn_entities(&mut self, ecs: &mut World) {
+        let mut count = 0;
         let spawn_info = {
             let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
             spawn::info::generate_spawn_info(&mut rng, 10)
@@ -117,21 +118,19 @@ impl BuilderChain {
                 let entity = spawn::spawner::build_from_name(ecs, name, map_index);
                 // track the entity if we built one
                 if let Some(entity) = entity {
-                    {
-                        // mark as a target
-                        let mut targets = ecs.write_storage::<crate::MissionTarget>();
-                        targets.insert(entity, MissionTarget).ok();
-                    }
-
                     spawn::spawner::track_entity(ecs, entity, map_index);
+                    count += 1;
                 }
             }
         }
 
         // random spawns in each area of minor monsters and resources
         for area in self.build_data.noise_areas.iter() {
-            spawn::spawner::spawn_region(ecs, area.1, &spawn_info);
+            count += spawn::spawner::spawn_region(ecs, area.1, &spawn_info);
         }
+
+        let mut map = ecs.fetch_mut::<Map>();
+        map.initial_spawns = count;
     }
 
     pub fn spawn_overworld(&mut self, ecs: &mut World) {

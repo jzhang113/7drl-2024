@@ -78,9 +78,10 @@ pub fn build_from_name(ecs: &mut World, name: &String, index: usize) -> Option<E
 }
 
 /// Fills a region with stuff!
-pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnInfo) {
+pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnInfo) -> i32 {
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
     let mut areas: Vec<usize> = Vec::from(area);
+    let mut spawns = 0;
 
     {
         let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
@@ -90,7 +91,7 @@ pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnIn
         );
 
         if num_spawns == 0 {
-            return;
+            return 0;
         }
 
         for _i in 0..num_spawns {
@@ -110,16 +111,16 @@ pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnIn
 
     // Actually spawn the monsters
     for (map_idx, name) in spawn_points.iter() {
-        //let point = map.index_to_point2d(*map_idx);
         let entity = build_from_name(ecs, name, *map_idx);
-        // track_entity(ecs, &mut *map, entity, point);
-        // spawn_entity(ecs, &spawn);
 
         // track the entity if we built one
         if let Some(entity) = entity {
             track_entity(ecs, entity, *map_idx);
+            spawns += 1;
         }
     }
+
+    spawns
 }
 
 pub fn track_entity(ecs: &mut World, entity: Entity, map_idx: usize) {

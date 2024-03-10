@@ -34,6 +34,8 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked_tiles: Vec<bool>,
     pub blocked_vision: Vec<bool>,
+    pub initial_spawns: i32,
+    pub exit_spawned: bool,
     search_args: SearchArgs,
 }
 
@@ -117,6 +119,8 @@ impl Map {
             visible_tiles: vec![false; dim],
             blocked_tiles: vec![false; dim],
             blocked_vision: vec![false; dim], // this is probably sparse?
+            initial_spawns: 0,
+            exit_spawned: false,
             search_args: SearchArgs::default(),
         }
     }
