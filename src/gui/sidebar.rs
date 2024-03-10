@@ -147,6 +147,10 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
     ctx.print_color(x, y, text_highlight_color(), bg_color(), 'i');
     ctx.print(x + 1, y, "nventory");
 
+    x += 11;
+    ctx.print_color(x, y, text_highlight_color(), bg_color(), 'v');
+    ctx.print(x + 1, y, "iew log");
+
     // super::tooltip::draw_tooltips(&gs.ecs, ctx);
 }
 

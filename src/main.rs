@@ -52,7 +52,6 @@ pub use direction::Direction;
 pub use map::{Map, TileType};
 pub use monster_part::*;
 pub use range_type::*;
-pub use spawn::info::SpawnInfo;
 pub use sys_ai::{Behavior, NextIntent};
 pub use sys_particle::{ParticleBuilder, ParticleRequest};
 pub use sys_spawner::{SpawnRequest, SpawnType, Spawner};
@@ -102,6 +101,7 @@ pub enum RunState {
     InventorySelect {
         index: usize,
     },
+    ViewGameLog,
 }
 
 pub struct State {
@@ -593,6 +593,17 @@ impl GameState for State {
 
                     if next_status == RunState::Running {
                         player::end_turn_cleanup(&mut self.ecs);
+                    }
+                }
+            }
+            RunState::ViewGameLog => {
+                gui::log::expanded_log(&self.ecs, ctx);
+                match ctx.key {
+                    None => {}
+                    Some(key) => {
+                        if key == rltk::VirtualKeyCode::Escape {
+                            next_status = RunState::AwaitingInput;
+                        }
                     }
                 }
             }

@@ -13,6 +13,7 @@ impl<'a> System<'a> for DeathSystem {
         ReadStorage<'a, crate::MultiTile>,
         WriteStorage<'a, crate::Fragile>,
         WriteStorage<'a, crate::Viewshed>,
+        WriteExpect<'a, crate::GameLog>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -24,8 +25,9 @@ impl<'a> System<'a> for DeathSystem {
             positions,
             healths,
             multitiles,
-            mut breakables,
+            breakables,
             mut viewsheds,
+            mut log,
         ) = data;
         let mut dead = Vec::new();
 
@@ -40,6 +42,7 @@ impl<'a> System<'a> for DeathSystem {
                     map.untrack_creature(pos_index, multis);
                 } else {
                     *run_state = crate::RunState::Dead { success: false };
+                    log.add("You are knocked out! Press r to try again")
                 }
             }
         }

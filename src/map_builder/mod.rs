@@ -100,34 +100,10 @@ impl BuilderChain {
 
     pub fn spawn_entities(&mut self, ecs: &mut World) {
         let mut count = 0;
-        let spawn_info = {
-            let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-            spawn::info::generate_spawn_info(&mut rng, 10)
-        };
-
-        {
-            // spawn exactly 1 of each in the major monster list
-            for name in &spawn_info.major_monsters {
-                let map_index = {
-                    let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-                    let random_area = rng.range(0, self.build_data.noise_areas.len());
-                    let random_spawn =
-                        &self.build_data.noise_areas.iter().nth(random_area).unwrap();
-                    random_spawn.1[rng.range(0, random_spawn.1.len())]
-                };
-
-                let entity = spawn::spawner::build_from_name(ecs, name, map_index);
-                // track the entity if we built one
-                if let Some(entity) = entity {
-                    spawn::spawner::track_entity(ecs, entity, map_index);
-                    count += 1;
-                }
-            }
-        }
 
         // random spawns in each area of minor monsters and resources
         for area in self.build_data.noise_areas.iter() {
-            count += spawn::spawner::spawn_region(ecs, area.1, &spawn_info);
+            count += spawn::spawner::spawn_region(ecs, area.1, self.build_data.map.level as i32);
         }
 
         let mut map = ecs.fetch_mut::<Map>();

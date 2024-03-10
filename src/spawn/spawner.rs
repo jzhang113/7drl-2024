@@ -78,33 +78,29 @@ pub fn build_from_name(ecs: &mut World, name: &String, index: usize) -> Option<E
 }
 
 /// Fills a region with stuff!
-pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnInfo) -> i32 {
+pub fn spawn_region(ecs: &mut World, area: &[usize], difficulty: i32) -> i32 {
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
     let mut areas: Vec<usize> = Vec::from(area);
     let mut spawns = 0;
 
     {
         let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-        let num_spawns = i32::min(
-            areas.len() as i32,
-            rng.roll_dice(1, MAX_MONSTERS + 3) + (4 - 1) - 3,
-        );
+        let max_difficulty = 2 * difficulty;
+        let mut curr_difficulty = 0;
 
-        if num_spawns == 0 {
-            return 0;
-        }
+        while curr_difficulty < max_difficulty {
+            let rand_index = rng.range(0, super::spawner::MONSTERS.len());
+            let (name, (difficulty, _)) = super::spawner::MONSTERS.iter().nth(rand_index).unwrap();
+            curr_difficulty += difficulty;
 
-        for _i in 0..num_spawns {
-            let array_index = if areas.len() == 1 {
-                0usize
-            } else {
-                (rng.roll_dice(1, areas.len() as i32) - 1) as usize
-            };
-
+            let array_index = rng.range(0, areas.len());
             let map_idx = areas[array_index];
-            if let Some(spawn) = roll(spawn_info, &mut rng) {
-                spawn_points.insert(map_idx, spawn);
-                areas.remove(array_index);
+            spawn_points.insert(map_idx, name.clone());
+            areas.remove(array_index);
+
+            // chance to early quit
+            if rng.rand::<f32>() < curr_difficulty as f32 / max_difficulty as f32 {
+                break;
             }
         }
     }
@@ -127,26 +123,6 @@ pub fn track_entity(ecs: &mut World, entity: Entity, map_idx: usize) {
     let mut map = ecs.fetch_mut::<Map>();
     let multis = ecs.read_storage::<MultiTile>();
     map.track_creature(entity, map_idx, multis.get(entity));
-}
-
-fn roll(spawn_info: &SpawnInfo, rng: &mut rltk::RandomNumberGenerator) -> Option<String> {
-    let type_roll = rng.rand::<f32>();
-
-    if type_roll < 0.25 {
-        if spawn_info.minor_monsters.is_empty() {
-            return None;
-        }
-
-        let roll = rng.range::<usize>(0, spawn_info.minor_monsters.len());
-        Some(spawn_info.minor_monsters[roll].clone())
-    } else {
-        if spawn_info.resources.is_empty() {
-            return None;
-        }
-
-        let roll = rng.range::<usize>(0, spawn_info.resources.len());
-        Some(spawn_info.resources[roll].clone())
-    }
 }
 
 // #region Player
