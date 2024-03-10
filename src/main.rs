@@ -186,6 +186,7 @@ impl State {
 
         let log = gamelog::GameLog {
             entries: Vec::new(),
+            pending: None,
             dirty: false,
         };
         self.ecs.insert(log);
@@ -364,6 +365,7 @@ impl State {
             let random_idx = rng.range(0, exit_locs.len());
             let random_loc = exit_locs[random_idx];
             map.tiles[random_loc] = TileType::DownStairs;
+            map.exit_spawned = true;
             log.add("An exit portal has appeared!");
         } else {
             // more robust handling for this

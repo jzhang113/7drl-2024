@@ -136,7 +136,7 @@ impl Map {
 
     pub fn set_blocked_tiles(&mut self) {
         for (index, tile) in self.tiles.iter_mut().enumerate() {
-            let is_blocked = *tile == TileType::Wall;
+            let is_blocked = *tile == TileType::Wall || *tile == TileType::Water;
             self.blocked_tiles[index] = is_blocked;
         }
     }

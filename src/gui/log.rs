@@ -7,8 +7,14 @@ pub fn update_log_text(ecs: &World, ctx: &mut Rltk) {
         return;
     }
 
-    if let Some(strn) = log.entries.last() {
+    if let Some(entry) = log.entries.last() {
         let y = CONSOLE_HEIGHT - 1;
-        ctx.print(0, y, strn);
+
+        if entry.count <= 1 {
+            ctx.print(0, y, &entry.text);
+        } else {
+            let text = format!("{} (x{})", entry.text, entry.count);
+            ctx.print(0, y, text);
+        }
     }
 }

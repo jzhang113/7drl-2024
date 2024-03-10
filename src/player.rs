@@ -34,6 +34,10 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
         }
 
         if !map.blocked_tiles[dest_index] {
+            if map.tiles[dest_index] == crate::TileType::ShallowWater {
+                log.late_add("The shallow water slows you down");
+            }
+
             let new_move = MoveIntent {
                 loc: Point::new(new_x, new_y),
                 force_facing: None,
@@ -44,7 +48,13 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 .expect("Failed to insert new movement from player");
 
             return RunState::Running;
-        } else if map.tiles[dest_index] != crate::TileType::Wall {
+        }
+
+        if map.tiles[dest_index] == crate::TileType::Wall {
+            log.add("You bump into a wall");
+        } else if map.tiles[dest_index] == crate::TileType::Water {
+            log.add("The water looks too deep to move through");
+        } else {
             if let Some(dest_ent) = map.creature_map.get(&dest_index) {
                 if let Some(_) = openables.get(*dest_ent) {
                     if let Some(health) = healths.get_mut(*dest_ent) {
@@ -372,6 +382,7 @@ pub fn end_turn_cleanup(ecs: &mut World) {
     // clear message line
     let mut log = ecs.fetch_mut::<GameLog>();
     log.dirty = false;
+    log.transfer_pending();
 }
 
 fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
