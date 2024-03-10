@@ -430,7 +430,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 }
             }
             VirtualKeyCode::A => RunState::AbilitySelect { index: 0 },
-            VirtualKeyCode::I => RunState::InventorySelect { index: 0 },
+            // VirtualKeyCode::I => RunState::InventorySelect { index: 0 },
             VirtualKeyCode::V => RunState::ViewGameLog,
             _ => RunState::AwaitingInput,
         },

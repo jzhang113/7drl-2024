@@ -150,6 +150,12 @@ pub struct Heal {
 }
 
 #[derive(Component)]
+pub struct EarthScroll {
+    pub radius: i32,
+    pub active_prob: f32,
+}
+
+#[derive(Component)]
 pub struct Item;
 
 #[derive(Component)]

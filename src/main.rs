@@ -146,6 +146,7 @@ impl State {
         self.ecs.register::<TrapAiState>();
 
         self.ecs.register::<Heal>();
+        self.ecs.register::<EarthScroll>();
         self.ecs.register::<Item>();
         self.ecs.register::<Openable>();
         self.ecs.register::<Fragile>();

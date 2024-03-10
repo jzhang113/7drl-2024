@@ -250,9 +250,7 @@ impl Map {
         self.get_available_exits(idx)
     }
 
-    pub fn track_item(&mut self, data: Entity, point: Point) -> bool {
-        let index = self.point2d_to_index(point);
-
+    pub fn track_item(&mut self, data: Entity, index: usize) -> bool {
         if self.item_map.get(&index).is_some() {
             false
         } else {

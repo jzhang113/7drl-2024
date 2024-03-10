@@ -68,6 +68,11 @@ fn load_monster_table() -> HashMap<String, (i32, Spawner)> {
         "Assassin".to_string(),
         (3, Box::new(super::melee::build_assassin)),
     );
+    table.insert("Potion".to_string(), (0, Box::new(build_health_potion)));
+    table.insert(
+        "Scroll of Earth".to_string(),
+        (0, Box::new(build_earth_scroll)),
+    );
 
     table
 }
@@ -116,7 +121,41 @@ pub fn spawn_region(ecs: &mut World, area: &[usize], difficulty: i32) -> i32 {
         }
     }
 
+    spawn_items(ecs, &mut areas, difficulty);
+
     spawns
+}
+
+fn spawn_items(ecs: &mut World, areas: &mut Vec<usize>, difficulty: i32) {
+    let mut spawn_points: HashMap<usize, String> = HashMap::new();
+
+    {
+        let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
+        let item_chance = rng.rand::<f32>();
+        if item_chance < 0.3 {
+            let item_type = rng.range(0, 2);
+            let item_name = match item_type {
+                0 => "Potion",
+                1 => "Scroll of Earth",
+                _ => unreachable!(),
+            };
+
+            let array_index = rng.range(0, areas.len());
+            let map_idx = areas[array_index];
+            spawn_points.insert(map_idx, item_name.to_string());
+            areas.remove(array_index);
+        }
+    }
+
+    for (map_idx, name) in spawn_points.iter() {
+        let entity = build_from_name(ecs, name, *map_idx);
+
+        // track the entity if we built one
+        if let Some(entity) = entity {
+            let mut map = ecs.fetch_mut::<Map>();
+            map.track_item(entity, *map_idx);
+        }
+    }
 }
 
 pub fn track_entity(ecs: &mut World, entity: Entity, map_idx: usize) {
@@ -196,52 +235,48 @@ pub fn build_enemy_base(ecs: &mut World) -> EntityBuilder {
 // #endregion
 
 // #region Objects
-fn barrel_builder(ecs: &mut World, point: Point) -> EntityBuilder {
-    ecs.create_entity()
-        .with(Position {
-            x: point.x,
-            y: point.y,
-        })
-        .with(Renderable {
-            symbol: rltk::to_cp437('#'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-            zindex: 1,
-        })
-        .with(Viewable {
-            name: "Barrel".to_string(),
-            description: vec![
-                "A barrel, what".to_string(),
-                "could be".to_string(),
-                "inside?".to_string(),
-            ],
-            seen: false,
-        })
-        .with(BlocksTile)
-        .with(Openable)
-        .with(Health { current: 2, max: 2 })
-}
-
-pub fn build_empty_barrel(ecs: &mut World, point: Point, _quality: i32) -> Entity {
-    barrel_builder(ecs, point).build()
-}
-
-pub fn _build_health_pickup(ecs: &mut World, point: Point) -> Entity {
+pub fn build_health_potion(ecs: &mut World, point: Point) -> Entity {
     ecs.create_entity()
         .with(crate::Position {
             x: point.x,
             y: point.y,
         })
         .with(crate::Renderable {
-            symbol: rltk::to_cp437('+'),
+            symbol: rltk::to_cp437('!'),
             fg: crate::health_color(),
             bg: crate::bg_color(),
-            zindex: 1,
+            zindex: 0,
         })
-        .with(crate::Heal { amount: 2 })
+        .with(Item)
+        .with(crate::Heal { amount: 4 })
         .with(crate::Viewable {
-            name: "health".to_string(),
-            description: vec!["Packaged health, don't ask".to_string()],
+            name: "Potion".to_string(),
+            description: vec![],
+            seen: false,
+        })
+        .build()
+}
+
+pub fn build_earth_scroll(ecs: &mut World, point: Point) -> Entity {
+    ecs.create_entity()
+        .with(crate::Position {
+            x: point.x,
+            y: point.y,
+        })
+        .with(crate::Renderable {
+            symbol: rltk::to_cp437('?'),
+            fg: crate::text_highlight_color(),
+            bg: crate::bg_color(),
+            zindex: 0,
+        })
+        .with(Item)
+        .with(crate::EarthScroll {
+            radius: 4,
+            active_prob: 0.3,
+        })
+        .with(crate::Viewable {
+            name: "Scroll of Earth".to_string(),
+            description: vec![],
             seen: false,
         })
         .build()

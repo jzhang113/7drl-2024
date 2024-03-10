@@ -81,7 +81,7 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
 
     ctx.set_active_console(1);
 
-    for (ent, pos, render, mtt, facing, ()) in (
+    let mut data = (
         &entities,
         &positions,
         &renderables,
@@ -90,7 +90,10 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
         !&particles,
     )
         .join()
-    {
+        .collect::<Vec<_>>();
+    data.sort_by(|&a, &b| a.2.zindex.cmp(&b.2.zindex));
+
+    for (ent, pos, render, mtt, facing, ()) in data.iter() {
         if map.visible_tiles[map.get_index(pos.x, pos.y)] || SHOW_REND {
             set_map_tile_with_bg(
                 ctx,
@@ -102,7 +105,7 @@ pub fn draw_renderables(ecs: &World, ctx: &mut Rltk) {
             );
 
             if let Some(facing) = facing {
-                if ent != *player {
+                if *ent != *player {
                     let facing_symbol = match facing.direction {
                         Direction::N => 3,
                         Direction::E => 5,
