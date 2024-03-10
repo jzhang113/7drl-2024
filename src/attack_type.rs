@@ -7,6 +7,7 @@ use rltk::Point;
 pub enum AttackType {
     Melee,
     Melee2,
+    Shove,
     MeleeKnockback,
     MeleeStun,
     MeleeArea { radius: i32 },
@@ -105,6 +106,7 @@ pub fn get_attack_range(attack_type: AttackType) -> RangeType {
     match attack_type {
         AttackType::Melee => RangeType::Square { size: 1 },
         AttackType::Melee2 => RangeType::Square { size: 1 },
+        AttackType::Shove => RangeType::Diamond { size: 1 },
         AttackType::MeleeKnockback => RangeType::Square { size: 1 },
         AttackType::MeleeStun => RangeType::Square { size: 1 },
         AttackType::MeleeArea { .. } => RangeType::Single,
@@ -141,6 +143,7 @@ pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
         AttackType::MeleeArea { radius } => 10 + 4 * radius as u32,
         AttackType::MeleeStun => 4,
+        AttackType::Shove => 3,
         AttackType::OnProjectileAreaHit { .. } => 0,
         AttackType::ProjectileStun { .. } => 16,
         AttackType::ProjectileArea { .. } => 22,
@@ -177,6 +180,7 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
         AttackType::Melee => vec![Damage { amount: 1 }],
         AttackType::Melee2 => vec![Damage { amount: 2 }],
         AttackType::MeleeKnockback => vec![Damage { amount: 1 }, Knockback { amount: 1 }],
+        AttackType::Shove => vec![Knockback { amount: 3 }, NeedsStamina { amount: 3 }],
         AttackType::MeleeStun => vec![Stun { duration: 10 }],
         AttackType::MeleeArea { .. } => vec![Damage { amount: 2 }],
         AttackType::Projectile { .. } => vec![FollowsPath {

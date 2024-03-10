@@ -230,9 +230,6 @@ fn spawn_items(ecs: &mut World, areas: &mut Vec<usize>, difficulty: i32) {
 
         // track the entity if we built one
         if let Some(entity) = entity {
-            dbg!(map_idx);
-            dbg!(name);
-
             let mut map = ecs.fetch_mut::<Map>();
             map.track_item(entity, *map_idx);
         }

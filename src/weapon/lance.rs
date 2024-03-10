@@ -6,6 +6,7 @@ pub enum LanceAttack {
     Charge,
     Sweep,
     Hook,
+    Shove,
 }
 
 pub fn get_attack_data(attack: LanceAttack) -> AttackData {
@@ -24,6 +25,7 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
         LanceAttack::Hook => "Hook",
         LanceAttack::Charge => "Vault",
         LanceAttack::Sweep => "Exploding Bolt",
+        LanceAttack::Shove => "Shove",
     }
     .to_string();
 
@@ -32,6 +34,7 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
         LanceAttack::Hook => 4,
         LanceAttack::Charge => 6,
         LanceAttack::Sweep => 2,
+        LanceAttack::Shove => 3,
     };
 
     let attack_type = match attack {
@@ -40,8 +43,9 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
             explosion_size: 1,
         },
         LanceAttack::DrawAttack => AttackType::AdvancingFlip { range: 2 },
-        LanceAttack::Hook => AttackType::Hook { radius: 4 },
+        LanceAttack::Hook => AttackType::Hook { radius: 5 },
         LanceAttack::Charge => AttackType::Dodge { radius: 3 },
+        LanceAttack::Shove => AttackType::Shove,
     };
 
     // TODO: Commenting this out so we don't use the wrong framedata

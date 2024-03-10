@@ -357,7 +357,7 @@ impl State {
         if remaining <= 1 {
             true
         } else {
-            remaining - 1 <= total / 10
+            remaining - 1 <= total / 5
         }
     }
 
@@ -529,11 +529,17 @@ impl GameState for State {
             RunState::GenerateLevel => {
                 self.new_level(1, None);
                 sys_visibility::VisibilitySystem.run_now(&self.ecs);
+
+                let mut log = self.ecs.fetch_mut::<GameLog>();
+                log.add("You enter the arena. Good luck challenger");
                 next_status = RunState::AwaitingInput;
             }
             RunState::ChangeMap { level } => {
                 self.new_level(level, None);
                 sys_visibility::VisibilitySystem.run_now(&self.ecs);
+
+                let mut log = self.ecs.fetch_mut::<GameLog>();
+                log.add(format!("You enter arena {}", level));
                 next_status = RunState::AwaitingInput;
             }
             RunState::Dead { success } => {
@@ -552,7 +558,7 @@ impl GameState for State {
                         }
                     }
                 }
-            },
+            }
             RunState::Shop => {
                 gui::overworld::draw_shop(ctx);
                 match ctx.key {
@@ -675,6 +681,7 @@ fn pabb() -> Vec<AttackData> {
     attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Sweep));
     attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Charge));
     attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Hook));
+    attacks.push(crate::weapon::lance::get_attack_data(LanceAttack::Shove));
 
     attacks
 }

@@ -4,7 +4,7 @@ use crate::*;
 pub fn draw_abilities(gs: &State, ctx: &mut Rltk, selected_idx: usize) {
     let book_x = MAP_SCREEN_X + 1;
     let book_y = MAP_SCREEN_Y + 1;
-    let box_w = 15;
+    let box_w = 25;
     let box_h = gs.player_abilities.len() * 2 + 1;
 
     ctx.draw_box(
@@ -43,5 +43,10 @@ pub fn draw_abilities(gs: &State, ctx: &mut Rltk, selected_idx: usize) {
             bg_color(),
             ability.name.clone(),
         );
+
+        let fd = attack_type::get_frame_data(ability.attack_type);
+        ctx.print_color(book_x + 18, row, text_color, bg_color(), ability.stam_cost);
+        ctx.print_color(book_x + 20, row, text_color, bg_color(), fd.startup);
+        ctx.print_color(book_x + 23, row, text_color, bg_color(), fd.recovery);
     }
 }

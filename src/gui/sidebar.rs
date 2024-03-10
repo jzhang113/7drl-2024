@@ -140,6 +140,10 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
     draw_movement_controls(ctx, x, y, text_highlight_color(), bg_color(), false);
 
     x += 11;
+    ctx.print_color(x, y, text_highlight_color(), bg_color(), "[.]");
+    ctx.print(x + 4, y, "wait");
+
+    x += 10;
     ctx.print_color(x, y, text_highlight_color(), bg_color(), 'a');
     ctx.print(x + 1, y, "bility");
 

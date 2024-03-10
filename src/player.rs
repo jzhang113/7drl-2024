@@ -1,8 +1,9 @@
 use crate::*;
 use rltk::{Point, VirtualKeyCode};
 
-pub const DODGE_STAM_REQ: i32 = 6;
+pub const DODGE_STAM_REQ: i32 = 5;
 pub const HOOK_STAM_REQ: i32 = 3;
+pub const SHOVE_STAM_REQ: i32 = 3;
 pub const SUPLEX_STAM_REQ: i32 = 2;
 pub const BOLT_STAM_REQ: i32 = 2;
 
