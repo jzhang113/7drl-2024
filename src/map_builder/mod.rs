@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 mod common;
 mod lake_spawner;
+mod map_culler;
 mod noise_region;
 mod room_corridor;
 mod room_drawer;
@@ -151,7 +152,7 @@ pub trait MetaMapBuilder {
 
 pub fn random_builder(width: i32, height: i32, level: u32, name: String) -> BuilderChain {
     let mut rng = rltk::RandomNumberGenerator::new();
-    let builder_type = rng.roll_dice(0, 3);
+    let builder_type = rng.range(0, 5);
     println!("Building map type {}", builder_type);
 
     with_builder(&MapBuilderArgs {
@@ -172,6 +173,10 @@ pub fn with_builder(args: &MapBuilderArgs) -> BuilderChain {
     builder.with(noise_region::NoiseRegion::new());
     builder.with(lake_spawner::LakeSpawner::new());
     builder.with(lake_spawner::LakeEroder::new());
+    builder.with(map_culler::MapCuller::new());
+
+    // refresh noise regions for spawn placements
+    builder.with(noise_region::NoiseRegion::new());
 
     builder
 }
@@ -182,7 +187,7 @@ fn get_builder(
     rng: &mut rltk::RandomNumberGenerator,
 ) {
     match builder_type {
-        0 => {
+        0 | 1 => {
             builder.starts_with(random_room::RandomRoomBuilder::new());
             builder.with(room_drawer::RoomDrawer::new());
             builder.with(room_corridor::NearestCorridor::new());
@@ -191,10 +196,10 @@ fn get_builder(
         }
         // 2 => Box::new(BspInteriorBuilder::new(new_depth)),
         // 3 => Box::new(CellularAutomataBuilder::new(new_depth)),
-        1 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_area()),
-        2 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_halls()),
-        3 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::winding_passages()),
-        4 => builder.starts_with(overworld::OverworldBuilder::new()),
+        2 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_area()),
+        3 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::open_halls()),
+        4 => builder.starts_with(drunk_walk::DrunkardsWalkBuilder::winding_passages()),
+        99 => builder.starts_with(overworld::OverworldBuilder::new()),
         _ => unreachable!(), //_ => Box::new(SimpleMapBuilder::new(new_depth)),
     }
 }

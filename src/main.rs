@@ -258,7 +258,7 @@ impl State {
         self.new_level(
             0,
             Some(MapBuilderArgs {
-                builder_type: 4,
+                builder_type: 99,
                 width: 20,
                 height: 20,
                 level: 0,
@@ -286,7 +286,22 @@ impl State {
 
         let new_map = {
             let mut rng = self.ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-            map_builder.build_map(&mut rng);
+            let mut done = false;
+
+            while !done {
+                map_builder.build_map(&mut rng);
+                let floor_count = map_builder
+                    .build_data
+                    .map
+                    .tiles
+                    .iter()
+                    .filter(|tile| **tile == TileType::Floor)
+                    .count();
+
+                // empirical threshold
+                done = floor_count > 200;
+            }
+
             map_builder.build_data.map.clone()
         };
 

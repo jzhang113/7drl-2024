@@ -40,13 +40,22 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 TileType::NewLevel => (rltk::to_cp437('>'), map_exit_color()),
             };
 
-            if !map.visible_tiles[idx] {
+            if !map.visible_tiles[idx] && !SHOW_MAP {
                 // TODO: the deep water color does not convert to greyscale nicely
                 if map.tiles[idx] == TileType::Water {
                     fg = map_shallow_water_color().to_greyscale();
                 } else {
                     fg = fg.to_greyscale();
                 }
+
+                ctx.set_active_console(0);
+                highlight_bg(
+                    ctx,
+                    &map.camera.origin,
+                    &map.index_to_point2d(idx),
+                    RGB::named(rltk::GRAY15),
+                );
+                ctx.set_active_console(1);
             }
 
             set_map_tile(

@@ -43,7 +43,7 @@ impl DrunkardsWalkBuilder {
                 spawn_mode: DrunkSpawnMode::StartingPoint,
                 drunken_lifetime: 1000,
                 floor_percent: 0.5,
-                digger_size: 4,
+                digger_size: 2,
             },
         })
     }
@@ -63,7 +63,7 @@ impl DrunkardsWalkBuilder {
         Box::new(Self {
             settings: DrunkardSettings {
                 spawn_mode: DrunkSpawnMode::Random,
-                drunken_lifetime: 100,
+                drunken_lifetime: 200,
                 floor_percent: 0.4,
                 digger_size: 2,
             },
@@ -176,13 +176,6 @@ impl DrunkardsWalkBuilder {
             "{} dwarves gave up their sobriety, of whom {} actually found a wall.",
             digger_count, active_digger_count
         ));
-
-        // Find all tiles we can reach from the starting point
-        let exit_tile =
-            remove_unreachable_areas_returning_most_distant(&mut build_data.map, start_idx);
         build_data.take_snapshot();
-
-        // Place the stairs
-        // build_data.map.tiles[exit_tile] = TileType::DownStairs;
     }
 }
