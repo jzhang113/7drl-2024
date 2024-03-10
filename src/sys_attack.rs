@@ -25,6 +25,8 @@ impl<'a> System<'a> for AttackSystem {
         ReadStorage<'a, crate::FrameData>,
         WriteStorage<'a, crate::Stunned>,
         WriteStorage<'a, crate::Fragile>,
+        ReadStorage<'a, crate::Viewable>,
+        WriteExpect<'a, crate::GameLog>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -47,6 +49,8 @@ impl<'a> System<'a> for AttackSystem {
             frames,
             mut stuns,
             mut breakables,
+            viewables,
+            mut log,
         ) = data;
         let mut finished_attacks = Vec::new();
 
@@ -92,12 +96,23 @@ impl<'a> System<'a> for AttackSystem {
                                 // if we collide into something, rewind the attempted movement
                                 // and insert a stun
                                 if !map.is_tile_valid(next_x, next_y) {
-                                    if let Some(collided_ent) =
-                                        map.creature_map.get(&map.get_index(next_x, next_y))
-                                    {
+                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);
+                                        }
+                                    }
+
+                                    if let Some(view) = viewables.get(ent_hit) {
+                                        if map.visible_tiles[map.get_index(next_x, next_y)] {
+                                            if ent_hit == *player {
+                                                log.add("You are knocked into something");
+                                            } else {
+                                                log.add(format!(
+                                                    "A {} is knocked into something",
+                                                view.name.to_lowercase()
+                                                ));
+                                            }
                                         }
                                     }
 
@@ -124,6 +139,20 @@ impl<'a> System<'a> for AttackSystem {
                                             },
                                         )
                                         .ok();
+
+                                    if let Some(view) = viewables.get(ent_hit) {
+                                        if map.visible_tiles[map.get_index(next_x, next_y)] {
+                                            if ent_hit == *player {
+                                                log.add("You are knocked into the water");
+                                            } else {
+                                                log.add(format!(
+                                                    "A {} is knocked into the water",
+                                                view.name.to_lowercase()
+                                                ));
+                                            }
+                                        }
+                                    }
+
                                     break;
                                 }
                             }
@@ -169,9 +198,7 @@ impl<'a> System<'a> for AttackSystem {
                                 if !map.is_tile_valid(next_x, next_y)
                                     || (!pass_over && next_x == src_pos.x && next_y == src_pos.y)
                                 {
-                                    if let Some(collided_ent) =
-                                        map.creature_map.get(&map.get_index(next_x, next_y))
-                                    {
+                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);
@@ -201,6 +228,20 @@ impl<'a> System<'a> for AttackSystem {
                                             },
                                         )
                                         .ok();
+
+                                    if let Some(view) = viewables.get(ent_hit) {
+                                        if map.visible_tiles[map.get_index(next_x, next_y)] {
+                                            if ent_hit == *player {
+                                                log.add("You are pulled into the water");
+                                            } else {
+                                                log.add(format!(
+                                                    "A {} is pulled into the water",
+                                                    view.name.to_lowercase()
+                                                ));
+                                            }
+                                        }
+                                    }
+
                                     break;
                                 }
                             }
@@ -232,16 +273,25 @@ impl<'a> System<'a> for AttackSystem {
                             if let Some(aff_health) = healths.get_mut(ent_hit) {
                                 aff_health.current -= amount;
 
-                                if let Some(aff_part) = multis.get_mut(ent_hit) {
-                                    if let Some(pos) = positions.get(ent_hit) {
-                                        for part in aff_part.part_list.iter_mut() {
-                                            for part_pos in part.symbol_map.keys() {
-                                                let adj_part_pos = pos.as_point() + *part_pos;
+                                let pos = positions.get(ent_hit).unwrap();
+                                if let Some(view) = viewables.get(ent_hit) {
+                                    if map.visible_tiles[map.get_index(pos.x, pos.y)] {
+                                        if ent_hit == *player {
+                                            log.add(format!("You are hit for {}", amount));
+                                        } else {
+                                            log.add(format!("A {} is hit for {}", view.name.to_lowercase(), amount));
+                                        }
+                                    }
+                                }
 
-                                                if hit_locs.contains(&adj_part_pos) {
-                                                    part.health -= 1;
-                                                    break;
-                                                }
+                                if let Some(aff_part) = multis.get_mut(ent_hit) {
+                                    for part in aff_part.part_list.iter_mut() {
+                                        for part_pos in part.symbol_map.keys() {
+                                            let adj_part_pos = pos.as_point() + *part_pos;
+
+                                            if hit_locs.contains(&adj_part_pos) {
+                                                part.health -= 1;
+                                                break;
                                             }
                                         }
                                     }

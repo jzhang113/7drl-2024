@@ -10,7 +10,10 @@ pub struct GameLog {
 }
 
 impl GameLog {
-    pub fn add(&mut self, text: &str) {
+    pub fn add<S>(&mut self, text: S)
+    where
+        S: ToString,
+    {
         let txt = text.to_string();
         let prev = self.entries.last_mut();
 

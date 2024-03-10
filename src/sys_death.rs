@@ -13,6 +13,7 @@ impl<'a> System<'a> for DeathSystem {
         ReadStorage<'a, crate::MultiTile>,
         WriteStorage<'a, crate::Fragile>,
         WriteStorage<'a, crate::Viewshed>,
+        ReadStorage<'a, crate::Viewable>,
         WriteExpect<'a, crate::GameLog>,
     );
 
@@ -27,12 +28,19 @@ impl<'a> System<'a> for DeathSystem {
             multitiles,
             breakables,
             mut viewsheds,
+            viewables,
             mut log,
         ) = data;
         let mut dead = Vec::new();
 
-        for (ent, pos, health, multis) in
-            (&entities, &positions, &healths, (&multitiles).maybe()).join()
+        for (ent, pos, health, view, multis) in (
+            &entities,
+            &positions,
+            &healths,
+            &viewables,
+            (&multitiles).maybe(),
+        )
+            .join()
         {
             let pos_index = map.get_index(pos.x, pos.y);
 
@@ -40,6 +48,10 @@ impl<'a> System<'a> for DeathSystem {
                 if ent != *player {
                     dead.push(ent);
                     map.untrack_creature(pos_index, multis);
+
+                    if map.visible_tiles[pos_index] {
+                        log.add(format!("A {} is knocked out", view.name.to_lowercase()))
+                    }
                 } else {
                     *run_state = crate::RunState::Dead { success: false };
                     log.add("You are knocked out! Press r to try again")
@@ -52,6 +64,11 @@ impl<'a> System<'a> for DeathSystem {
                 let pos_index = map.get_index(pos.x, pos.y);
                 map.untrack_creature(pos_index, None);
                 dead.push(ent);
+
+                if map.visible_tiles[pos_index] {
+                    // TODO: currently this is only temp walls
+                    log.add("A pillar crumbles");
+                }
             }
         }
 

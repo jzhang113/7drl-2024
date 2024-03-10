@@ -535,14 +535,20 @@ impl GameState for State {
                 sys_visibility::VisibilitySystem.run_now(&self.ecs);
                 next_status = RunState::AwaitingInput;
             }
-            RunState::Dead { success } => match ctx.key {
-                None => {}
-                Some(key) => {
-                    if key == rltk::VirtualKeyCode::R {
-                        self.load_overworld();
-                        self.reset_player();
+            RunState::Dead { success } => {
+                gui::log::expanded_log(&self.ecs, ctx);
+                match ctx.key {
+                    None => {}
+                    Some(key) => {
+                        if key == rltk::VirtualKeyCode::R {
+                            self.load_overworld();
+                            self.reset_player();
 
-                        next_status = RunState::Running;
+                            next_status = RunState::Running;
+                        } else {
+                            let mut log = self.ecs.fetch_mut::<GameLog>();
+                            log.add("You are knocked out! Press r to try again");
+                        }
                     }
                 }
             },
