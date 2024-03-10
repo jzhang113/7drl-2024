@@ -19,10 +19,8 @@ mod gui;
 mod inventory;
 mod map;
 mod map_builder;
-mod mission_info;
 mod monster_part;
 mod player;
-mod quest;
 mod range_type;
 mod spawn;
 mod sys_ai;
@@ -52,7 +50,6 @@ pub use colors::*;
 pub use components::*;
 pub use direction::Direction;
 pub use map::{Map, TileType};
-pub use mission_info::MissionInfo;
 pub use monster_part::*;
 pub use range_type::*;
 pub use spawn::info::SpawnInfo;
@@ -88,9 +85,6 @@ pub enum RunState {
     },
     GenerateLevel,
     ChangeMap,
-    MissionSelect {
-        index: usize,
-    },
     Shop,
     Blacksmith,
     Dead {
@@ -114,8 +108,6 @@ pub struct State {
     tab_targets: Vec<rltk::Point>,
     tab_index: usize,
     attack_modifier: Option<AttackType>,
-    quests: quest::log::QuestLog,
-    selected_quest: Option<quest::quest::Quest>,
     player_inventory: inventory::Inventory,
     player_charging: (bool, crate::Direction, u8, bool),
     player_abilities: Vec<AttackData>,
@@ -181,10 +173,6 @@ impl State {
 
         let player = spawn::spawner::build_player(&mut self.ecs, rltk::Point::new(0, 0));
         self.ecs.insert(player);
-
-        for _ in 0..3 {
-            self.quests.add_quest(&mut rng, 1);
-        }
         self.ecs.insert(rng);
 
         let log = gamelog::GameLog {
@@ -192,10 +180,6 @@ impl State {
             dirty: false,
         };
         self.ecs.insert(log);
-
-        // TODO: temp in-mission info handling
-        let mission_info = MissionInfo::new();
-        self.ecs.insert(mission_info);
 
         self.load_overworld();
     }
@@ -261,24 +245,16 @@ impl State {
     }
 
     fn load_overworld(&mut self) {
-        self.new_level(
-            &MapBuilderArgs {
-                builder_type: 4,
-                width: 20,
-                height: 20,
-                name: "Base".to_string(),
-                map_color: "#D4BF8E".to_string(),
-            },
-            &SpawnInfo {
-                major_monsters: vec![],
-                minor_monsters: vec![],
-                resources: vec![],
-                difficulty: 0,
-            },
-        )
+        self.new_level(Some(MapBuilderArgs {
+            builder_type: 4,
+            width: 20,
+            height: 20,
+            name: "Base".to_string(),
+            map_color: "#D4BF8E".to_string(),
+        }))
     }
 
-    fn new_level(&mut self, map_builder_args: &MapBuilderArgs, spawn_info: &SpawnInfo) {
+    fn new_level(&mut self, map_builder_args: Option<MapBuilderArgs>) {
         // Delete entities that aren't the player or his/her equipment
         let to_delete = self.entities_need_cleanup();
         for target in to_delete {
@@ -287,7 +263,13 @@ impl State {
                 .expect("Unable to delete entity");
         }
 
-        let mut map_builder = map_builder::with_builder(map_builder_args);
+        let is_overworld = map_builder_args.is_some();
+        let mut map_builder = if let Some(args) = map_builder_args {
+            map_builder::with_builder(&args)
+        } else {
+            map_builder::random_builder(80, 50, "-".to_string())
+        };
+
         let new_map = {
             let mut rng = self.ecs.fetch_mut::<rltk::RandomNumberGenerator>();
             map_builder.build_map(&mut rng);
@@ -320,10 +302,10 @@ impl State {
 
         // TODO: handle spawning as a meta map builder
         // fill the map
-        if map_builder_args.builder_type == 4 {
-            map_builder.spawn_overworld(&mut self.ecs, spawn_info);
+        if is_overworld {
+            map_builder.spawn_overworld(&mut self.ecs);
         } else {
-            map_builder.spawn_entities(&mut self.ecs, spawn_info);
+            map_builder.spawn_entities(&mut self.ecs);
         }
     }
 
@@ -335,26 +317,6 @@ impl State {
             .expect("player didn't have a health");
 
         player_healths.current = player_healths.max;
-    }
-
-    fn advance_day(&mut self) {
-        let mut rng = self.ecs.fetch_mut::<rltk::RandomNumberGenerator>();
-
-        self.quests.advance_day();
-        for _ in 0..3 {
-            self.quests.add_quest(&mut rng, self.max_cleared_level + 1);
-        }
-    }
-
-    fn apply_rewards(&mut self) {
-        if let Some(quest) = &self.selected_quest {
-            self.player_inventory.money += quest.reward;
-
-            let log_quest = self.quests.entries.iter_mut().find(|q| q == &quest);
-            if let Some(log_quest) = log_quest {
-                log_quest.completed = true;
-            }
-        }
     }
 }
 
@@ -480,22 +442,12 @@ impl GameState for State {
                     }
                 }
             }
-            RunState::GenerateLevel => match self.selected_quest.take() {
-                None => {
-                    let mut log = self.ecs.fetch_mut::<GameLog>();
-                    log.add("You need to select a quest first");
-                    next_status = RunState::AwaitingInput;
-                }
-                Some(mut quest) => {
-                    self.new_level(&quest.map_builder_args, &quest.spawn_info);
-                    sys_visibility::VisibilitySystem.run_now(&self.ecs);
+            RunState::GenerateLevel => {
+                self.new_level(None);
+                sys_visibility::VisibilitySystem.run_now(&self.ecs);
 
-                    // todo, merge with MissionInfo?
-                    quest.started = true;
-                    self.selected_quest = Some(quest);
-                    next_status = RunState::AwaitingInput;
-                }
-            },
+                next_status = RunState::AwaitingInput;
+            }
             RunState::ChangeMap => {
                 // TODO: support multi-level maps
                 unreachable!();
@@ -503,43 +455,17 @@ impl GameState for State {
                 // sys_visibility::VisibilitySystem.run_now(&self.ecs);
                 // next_status = RunState::AwaitingInput;
             }
-            RunState::Dead { success } => {
-                match ctx.key {
-                    None => {}
-                    Some(key) => {
-                        if key == rltk::VirtualKeyCode::R {
-                            self.load_overworld();
-                            self.reset_player();
+            RunState::Dead { success } => match ctx.key {
+                None => {}
+                Some(key) => {
+                    if key == rltk::VirtualKeyCode::R {
+                        self.load_overworld();
+                        self.reset_player();
 
-                            if success {
-                                self.apply_rewards();
-                                self.max_cleared_level = std::cmp::max(
-                                    self.selected_quest
-                                        .as_ref()
-                                        .map(|v| v.spawn_info.difficulty)
-                                        .unwrap_or(0),
-                                    self.max_cleared_level,
-                                );
-                            }
-
-                            // clear out temp mission info
-                            {
-                                let mut m_info = self.ecs.fetch_mut::<MissionInfo>();
-                                m_info.reset();
-                            }
-                            self.selected_quest = None;
-                            self.advance_day();
-
-                            next_status = RunState::Running;
-                        }
+                        next_status = RunState::Running;
                     }
                 }
-            }
-            RunState::MissionSelect { index } => {
-                gui::overworld::draw_missions(ctx, &self.quests, &self.selected_quest, index);
-
-                next_status = player::mission_select_input(self, ctx, index);
-            }
+            },
             RunState::Shop => {
                 gui::overworld::draw_shop(ctx);
                 match ctx.key {
@@ -631,8 +557,6 @@ fn main() -> rltk::BError {
         tab_targets: Vec::new(),
         tab_index: 0,
         attack_modifier: None,
-        quests: quest::log::QuestLog::new(),
-        selected_quest: None,
         player_inventory: inventory::Inventory::new(),
         player_charging: (false, crate::Direction::N, 0, false),
         player_abilities: pabb(),

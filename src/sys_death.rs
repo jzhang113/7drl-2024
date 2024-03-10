@@ -11,8 +11,6 @@ impl<'a> System<'a> for DeathSystem {
         ReadStorage<'a, crate::Position>,
         ReadStorage<'a, crate::Health>,
         ReadStorage<'a, crate::MultiTile>,
-        ReadStorage<'a, crate::MissionTarget>,
-        WriteExpect<'a, crate::MissionInfo>,
         WriteStorage<'a, crate::Fragile>,
         WriteStorage<'a, crate::Viewshed>,
     );
@@ -26,8 +24,6 @@ impl<'a> System<'a> for DeathSystem {
             positions,
             healths,
             multitiles,
-            targets,
-            mut m_info,
             mut breakables,
             mut viewsheds,
         ) = data;
@@ -42,14 +38,6 @@ impl<'a> System<'a> for DeathSystem {
                 if ent != *player {
                     dead.push(ent);
                     map.untrack_creature(pos_index, multis);
-
-                    if targets.contains(ent) {
-                        m_info.remove(ent);
-                    }
-
-                    if m_info.is_done() {
-                        *run_state = crate::RunState::Dead { success: true };
-                    }
                 } else {
                     *run_state = crate::RunState::Dead { success: false };
                 }

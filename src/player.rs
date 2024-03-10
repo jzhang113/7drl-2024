@@ -56,8 +56,8 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                             return RunState::Blacksmith;
                         }
                         NpcType::Handler => {
-                            log.add("Accept missions here");
-                            return RunState::MissionSelect { index: 0 };
+                            log.add("Hey there");
+                            return RunState::AwaitingInput;
                         }
                         NpcType::Shopkeeper => {
                             log.add("Buy useful items here");

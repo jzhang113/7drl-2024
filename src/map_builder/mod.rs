@@ -89,7 +89,12 @@ impl BuilderChain {
         }
     }
 
-    pub fn spawn_entities(&mut self, ecs: &mut World, spawn_info: &crate::SpawnInfo) {
+    pub fn spawn_entities(&mut self, ecs: &mut World) {
+        let spawn_info = {
+            let mut rng = ecs.fetch_mut::<rltk::RandomNumberGenerator>();
+            spawn::info::generate_spawn_info(&mut rng, 10)
+        };
+
         {
             // spawn exactly 1 of each in the major monster list
             for name in &spawn_info.major_monsters {
@@ -111,19 +116,17 @@ impl BuilderChain {
                     }
 
                     spawn::spawner::track_entity(ecs, entity, map_index);
-                    let mut m_info = ecs.fetch_mut::<crate::MissionInfo>();
-                    m_info.add(entity);
                 }
             }
         }
 
         // random spawns in each area of minor monsters and resources
         for area in self.build_data.noise_areas.iter() {
-            spawn::spawner::spawn_region(ecs, area.1, spawn_info);
+            spawn::spawner::spawn_region(ecs, area.1, &spawn_info);
         }
     }
 
-    pub fn spawn_overworld(&mut self, ecs: &mut World, spawn_info: &crate::SpawnInfo) {
+    pub fn spawn_overworld(&mut self, ecs: &mut World) {
         crate::spawn::spawner::build_npc_blacksmith(ecs, rltk::Point::new(13, 5));
         crate::spawn::spawner::build_npc_shopkeeper(ecs, rltk::Point::new(5, 5));
         crate::spawn::spawner::build_npc_handler(ecs, rltk::Point::new(13, 13));
@@ -141,7 +144,7 @@ pub trait MetaMapBuilder {
 
 pub fn random_builder(width: i32, height: i32, name: String) -> BuilderChain {
     let mut rng = rltk::RandomNumberGenerator::new();
-    let builder_type = rng.roll_dice(1, 3);
+    let builder_type = rng.roll_dice(0, 3);
     println!("Building map type {}", builder_type);
 
     with_builder(&MapBuilderArgs {
