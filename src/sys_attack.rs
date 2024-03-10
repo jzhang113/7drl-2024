@@ -24,7 +24,7 @@ impl<'a> System<'a> for AttackSystem {
         WriteStorage<'a, crate::AttackPath>,
         ReadStorage<'a, crate::FrameData>,
         WriteStorage<'a, crate::Stunned>,
-        WriteStorage<'a, crate::Fragile>
+        WriteStorage<'a, crate::Fragile>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -92,7 +92,9 @@ impl<'a> System<'a> for AttackSystem {
                                 // if we collide into something, rewind the attempted movement
                                 // and insert a stun
                                 if !map.is_tile_valid(next_x, next_y) {
-                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                    if let Some(collided_ent) =
+                                        map.creature_map.get(&map.get_index(next_x, next_y))
+                                    {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);
@@ -167,7 +169,9 @@ impl<'a> System<'a> for AttackSystem {
                                 if !map.is_tile_valid(next_x, next_y)
                                     || (!pass_over && next_x == src_pos.x && next_y == src_pos.y)
                                 {
-                                    if let Some(collided_ent) = map.creature_map.get(&map.get_index(next_x, next_y)) {
+                                    if let Some(collided_ent) =
+                                        map.creature_map.get(&map.get_index(next_x, next_y))
+                                    {
                                         if let Some(fragile) = breakables.get_mut(*collided_ent) {
                                             fragile.was_hit = true;
                                             p_builder.make_hit_particle(*collided_ent);

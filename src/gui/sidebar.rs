@@ -85,7 +85,7 @@ pub fn draw_sidebar(gs: &State, ctx: &mut Rltk) {
         }
     }
 
-    y += 5;
+    y += 2;
     for (rend, view, pos, health, frame, _) in (
         &rends,
         &viewables,

@@ -147,3 +147,15 @@ pub fn frame_current_color() -> RGB {
 pub fn facing_indicator_color() -> RGB {
     RGB::named(rltk::RED3)
 }
+
+pub fn enemy_ranged_color() -> RGB {
+    RGB::named(rltk::LIGHTGREEN)
+}
+
+pub fn enemy_melee_color() -> RGB {
+    RGB::named(rltk::LIGHTBLUE)
+}
+
+pub fn enemy_mage_color() -> RGB {
+    RGB::named(rltk::LIGHTYELLOW)
+}

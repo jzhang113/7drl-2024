@@ -1,3 +1,4 @@
+use super::*;
 use crate::*;
 use rltk::{Algorithm2D, Point};
 use std::collections::HashMap;
@@ -14,14 +15,59 @@ fn load_monster_table() -> HashMap<String, (i32, Spawner)> {
     let mut table = HashMap::new();
 
     table.insert(
-        "Pusher".to_string(),
+        "Archer".to_string(),
         (
             1,
-            Box::new(build_mook as for<'r> fn(&'r mut specs::World, rltk::Point) -> specs::Entity),
+            Box::new(
+                super::ranged::build_archer
+                    as for<'r> fn(&'r mut specs::World, rltk::Point) -> specs::Entity,
+            ),
         ),
     );
-    table.insert("Archer".to_string(), (2, Box::new(build_archer)));
-    table.insert("Crab".to_string(), (1, Box::new(build_crab)));
+    table.insert(
+        "Sharpshooter".to_string(),
+        (2, Box::new(super::ranged::build_sharpshooter)),
+    );
+    table.insert(
+        "Cannoneer".to_string(),
+        (2, Box::new(super::ranged::build_cannoneer)),
+    );
+    table.insert(
+        "Novice".to_string(),
+        (1, Box::new(super::ranged::build_novice)),
+    );
+    table.insert(
+        "Electromancer".to_string(),
+        (2, Box::new(super::ranged::build_electromancer)),
+    );
+    table.insert(
+        "Pyromancer".to_string(),
+        (3, Box::new(super::ranged::build_pyromancer)),
+    );
+    table.insert(
+        "Geomancer".to_string(),
+        (2, Box::new(super::ranged::build_geomancer)),
+    );
+    table.insert(
+        "Trainee".to_string(),
+        (1, Box::new(super::melee::build_trainee)),
+    );
+    table.insert(
+        "Warrior".to_string(),
+        (2, Box::new(super::melee::build_warrior)),
+    );
+    table.insert(
+        "Berserker".to_string(),
+        (2, Box::new(super::melee::build_berserker)),
+    );
+    table.insert(
+        "Juggernaut".to_string(),
+        (3, Box::new(super::melee::build_juggernaut)),
+    );
+    table.insert(
+        "Assassin".to_string(),
+        (3, Box::new(super::melee::build_assassin)),
+    );
 
     table
 }
@@ -55,7 +101,7 @@ pub fn spawn_region(ecs: &mut World, area: &[usize], spawn_info: &crate::SpawnIn
             };
 
             let map_idx = areas[array_index];
-            if let Some(spawn) = roll(spawn_info, &mut *rng) {
+            if let Some(spawn) = roll(spawn_info, &mut rng) {
                 spawn_points.insert(map_idx, spawn);
                 areas.remove(array_index);
             }
@@ -86,14 +132,14 @@ fn roll(spawn_info: &SpawnInfo, rng: &mut rltk::RandomNumberGenerator) -> Option
     let type_roll = rng.rand::<f32>();
 
     if type_roll < 0.25 {
-        if spawn_info.minor_monsters.len() == 0 {
+        if spawn_info.minor_monsters.is_empty() {
             return None;
         }
 
         let roll = rng.range::<usize>(0, spawn_info.minor_monsters.len());
         Some(spawn_info.minor_monsters[roll].clone())
     } else {
-        if spawn_info.resources.len() == 0 {
+        if spawn_info.resources.is_empty() {
             return None;
         }
 
@@ -130,7 +176,7 @@ pub fn build_player(ecs: &mut World, point: Point) -> Entity {
         .with(Viewshed {
             visible: Vec::new(),
             dirty: true,
-            range: 20,
+            range: 10,
         })
         //.with(BlocksTile)
         .with(Health {
@@ -169,96 +215,6 @@ pub fn build_enemy_base(ecs: &mut World) -> EntityBuilder {
             prev_path: None,
             path_step: 0,
         })
-}
-
-pub fn build_mook(ecs: &mut World, point: Point) -> Entity {
-    build_enemy_base(ecs)
-        .with(Position {
-            x: point.x,
-            y: point.y,
-        })
-        .with(Renderable {
-            symbol: rltk::to_cp437('X'),
-            fg: RGB::named(rltk::LIGHT_BLUE),
-            bg: RGB::named(rltk::BLACK),
-            zindex: 1,
-        })
-        .with(Viewable {
-            name: "Pusher".to_string(),
-            description: vec![],
-            seen: false,
-        })
-        .with(Health {
-            current: 10,
-            max: 10,
-        })
-        .with(Moveset {
-            moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
-            bump_attack: AttackType::Melee,
-        })
-        .with(Facing {
-            direction: crate::Direction::N,
-        })
-        .build()
-}
-
-pub fn build_crab(ecs: &mut World, point: Point) -> Entity {
-    build_enemy_base(ecs)
-        .with(Position {
-            x: point.x,
-            y: point.y,
-        })
-        .with(Renderable {
-            symbol: rltk::to_cp437('X'),
-            fg: RGB::named(rltk::LIGHT_BLUE),
-            bg: RGB::named(rltk::BLACK),
-            zindex: 1,
-        })
-        .with(Viewable {
-            name: "Crab".to_string(),
-            description: vec![],
-            seen: false,
-        })
-        .with(Health {
-            current: 10,
-            max: 10,
-        })
-        .with(Moveset {
-            moves: vec![(AttackType::Area, 0.25), (AttackType::Melee, 0.75)],
-            bump_attack: AttackType::Melee,
-        })
-        .with(Facing {
-            direction: crate::Direction::N,
-        })
-        .build()
-}
-
-pub fn build_archer(ecs: &mut World, point: Point) -> Entity {
-    build_enemy_base(ecs)
-        .with(Position {
-            x: point.x,
-            y: point.y,
-        })
-        .with(Renderable {
-            symbol: rltk::to_cp437('y'),
-            fg: RGB::named(rltk::LIGHT_GREEN),
-            bg: RGB::named(rltk::BLACK),
-            zindex: 1,
-        })
-        .with(Viewable {
-            name: "Archer".to_string(),
-            description: vec!["A grunt with a bow".to_string()],
-            seen: false,
-        })
-        .with(Health { current: 6, max: 6 })
-        .with(Moveset {
-            moves: vec![
-                (AttackType::Melee, 0.25),
-                (AttackType::Bolt { radius: 6 }, 0.75),
-            ],
-            bump_attack: AttackType::Melee,
-        })
-        .build()
 }
 // #endregion
 

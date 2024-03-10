@@ -8,6 +8,7 @@ pub enum RangeType {
     SquareInclusive { size: i32 },
     Ring { size: i32 },
     Diamond { size: i32 },
+    Cross { size: i32 },
     Path { dest: Point },
     Ray { dir: crate::Direction, len: i32 },
     Custom { offsets: Vec<(i32, i32)> },
@@ -54,6 +55,19 @@ pub fn resolve_range_at(range: &RangeType, center: Point) -> Vec<Point> {
                     if !(dx == 0 && dy == 0) && dx.abs() + dy.abs() <= *size {
                         targets.push(Point::new(center.x + dx, center.y + dy));
                     }
+                }
+            }
+        }
+        RangeType::Cross { size } => {
+            for x in center.x - size..=center.x + size {
+                if x != center.x {
+                    targets.push(Point::new(x, center.y));
+                }
+            }
+
+            for y in center.y - size..=center.y + size {
+                if y != center.y {
+                    targets.push(Point::new(center.x, y));
                 }
             }
         }

@@ -67,11 +67,11 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 } else {
                     // bump attack
                     let attack = crate::attack_type::get_attack_intent(
-                        AttackType::Haymaker,
+                        AttackType::MeleeKnockback,
                         Point::new(new_x, new_y),
                         None,
                     );
-                    let frame = crate::attack_type::get_frame_data(AttackType::Haymaker);
+                    let frame = crate::attack_type::get_frame_data(AttackType::MeleeKnockback);
 
                     attacks
                         .insert(*player, attack)
@@ -407,7 +407,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                     };
 
                     return RunState::Targetting {
-                        attack_type: AttackType::Dodge,
+                        attack_type: AttackType::Dodge { radius: 2 },
                         cursor_point: p,
                         validity_mode: crate::TargettingValid::Unblocked,
                         show_path: true,

@@ -29,8 +29,8 @@ pub fn build_arrow_trap(ecs: &mut World, point: Point) -> Entity {
             status: Behavior::Sleep,
         })
         .with(Moveset {
-            moves: vec![(AttackType::Line { radius: 6 }, 1.0)],
-            bump_attack: AttackType::Push,
+            moves: vec![(AttackType::RangedStun { radius: 6 }, 1.0)],
+            bump_attack: AttackType::MeleeKnockback,
         })
         .with(Facing {
             direction: Direction::S,

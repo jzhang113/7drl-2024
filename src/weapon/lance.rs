@@ -38,20 +38,24 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
     };
 
     let attack_type = match attack {
-        LanceAttack::Sweep => AttackType::Bolt { radius: 6 },
-        LanceAttack::DrawAttack => AttackType::Advancing,
+        LanceAttack::Sweep => AttackType::RangedArea {
+            radius: 6,
+            explosion_size: 2,
+        },
+        LanceAttack::DrawAttack => AttackType::AdvancingFlip { range: 2 },
         LanceAttack::Hook => AttackType::Hook { radius: 6 },
         LanceAttack::Charge => AttackType::Barrier,
     };
 
-    let frame_data = crate::FrameData {
-        startup: 15,
-        active: 1,
-        recovery: 15,
-        current: 0,
-        cancelled: false,
-        linger_time: 10,
-    };
+    // TODO: Commenting this out so we don't use the wrong framedata
+    // let frame_data = crate::FrameData {
+    //     startup: 15,
+    //     active: 1,
+    //     recovery: 15,
+    //     current: 0,
+    //     cancelled: false,
+    //     linger_time: 10,
+    // };
 
     AttackData {
         needs_target,
@@ -59,6 +63,6 @@ pub fn get_attack_data(attack: LanceAttack) -> AttackData {
         name,
         stam_cost,
         attack_type,
-        frame_data,
+        // frame_data,
     }
 }

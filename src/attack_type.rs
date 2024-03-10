@@ -1,34 +1,33 @@
 use crate::{AttackIntent, FrameData, RangeType};
 use derivative::Derivative;
 use rltk::Point;
-use std::collections::HashMap;
-
-lazy_static! {
-    static ref STARTUP_ACTIONS: HashMap<AttackType, Vec<crate::NextIntent>> = startup_actions();
-    static ref RECOVERY_ACTIONS: HashMap<AttackType, Vec<crate::NextIntent>> = recovery_actions();
-}
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Derivative)]
 #[derivative(Hash)]
 pub enum AttackType {
-    Area,
     Melee,
-    Stun,
-    Push,
-    Dodge,
-    Recover,
-    // lance
-    LanceDraw,
-    LanceThrust { level: u8, dest: Point },
-    LanceCharge { dir: crate::Direction },
-    // enemy specific attacks
-    Haymaker,
+    Melee2,
+    MeleeKnockback,
+    MeleeStun,
+    MeleeArea { radius: i32 },
+    // Projectile attacks
+    Projectile { radius: i32 },
+    ProjectileStun { radius: i32 },
+    ProjectileKnockback { radius: i32 },
+    ProjectileArea { radius: i32, explosion_size: i32 },
+    OnProjectileAreaHit { radius: i32 },
+    // Ranged attacks
     Ranged { radius: i32 },
-    Bolt { radius: i32 },
-    Line { radius: i32 },
-    Advancing,
+    RangedStun { radius: i32 },
+    RangedArea { radius: i32, explosion_size: i32 },
+    // Advancing attacks
+    AdvancingKnockback { range: i32 },
+    AdvancingFlip { range: i32 },
+    // Special cases
     Barrier,
     Hook { radius: i32 },
+    Dodge { radius: i32 },
+    Recover,
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -53,7 +52,7 @@ pub struct AttackData {
     pub name: String,
     pub stam_cost: i32,
     pub attack_type: AttackType,
-    pub frame_data: FrameData,
+    // pub frame_data: FrameData,
 }
 
 // check if an attack is can be executed
@@ -104,111 +103,113 @@ pub fn get_frame_data(attack_type: AttackType) -> FrameData {
 
 pub fn get_attack_range(attack_type: AttackType) -> RangeType {
     match attack_type {
-        AttackType::Area => RangeType::Single,
         AttackType::Melee => RangeType::Square { size: 1 },
-        AttackType::Stun => RangeType::Square { size: 1 },
-        AttackType::Push => RangeType::Square { size: 1 },
-        AttackType::Dodge => RangeType::Diamond { size: 2 },
-        AttackType::Recover => RangeType::Single,
-        AttackType::Haymaker => RangeType::Square { size: 1 },
+        AttackType::Melee2 => RangeType::Square { size: 1 },
+        AttackType::MeleeKnockback => RangeType::Square { size: 1 },
+        AttackType::MeleeStun => RangeType::Square { size: 1 },
+        AttackType::MeleeArea { .. } => RangeType::Single,
+        AttackType::Projectile { radius } => RangeType::Square { size: radius },
+        AttackType::ProjectileStun { radius } => RangeType::Square { size: radius },
+        AttackType::ProjectileKnockback { radius } => RangeType::Square { size: radius },
+        AttackType::ProjectileArea { radius, .. } => RangeType::Square { size: radius },
+        AttackType::OnProjectileAreaHit { radius } => RangeType::Single,
         AttackType::Ranged { radius } => RangeType::Square { size: radius },
-        AttackType::Bolt { radius } => RangeType::Square { size: radius },
-        AttackType::LanceDraw => RangeType::Square { size: 1 },
-        AttackType::LanceThrust { .. } => RangeType::Square { size: 1 },
-        AttackType::LanceCharge { .. } => RangeType::Single,
-        AttackType::Line { radius } => RangeType::Square { size: radius },
-        AttackType::Advancing { .. } => RangeType::Diamond { size: 1 },
+        AttackType::RangedStun { radius } => RangeType::Square { size: radius },
+        AttackType::RangedArea { radius, .. } => RangeType::Square { size: radius },
+        AttackType::AdvancingKnockback { range } => RangeType::Cross { size: range },
+        AttackType::AdvancingFlip { range } => RangeType::Cross { size: range },
         AttackType::Barrier => RangeType::Single,
-        AttackType::Hook { radius } => RangeType::Square { size: radius }
+        AttackType::Hook { radius } => RangeType::Square { size: radius },
+        AttackType::Dodge { radius } => RangeType::Square { size: radius },
+        AttackType::Recover => RangeType::Single,
     }
 }
 
 pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
     match attack_type {
-        AttackType::Area => RangeType::Square { size: 3 },
-        AttackType::LanceThrust { dest, .. } => RangeType::Path { dest },
+        AttackType::MeleeArea { radius } => RangeType::Square { size: radius },
+        AttackType::OnProjectileAreaHit { radius } => RangeType::SquareInclusive { size: radius },
+        AttackType::RangedArea { explosion_size, .. } => RangeType::Square {
+            size: explosion_size,
+        },
         AttackType::Barrier => RangeType::Ring { size: 3 },
-        _ => RangeType::Single
+        _ => RangeType::Single,
     }
 }
 
 pub fn get_startup(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Area => 25,
-        AttackType::Stun => 2,
-        AttackType::Bolt { .. } => 5,
+        AttackType::MeleeArea { .. } => 25,
+        AttackType::MeleeStun => 2,
+        AttackType::OnProjectileAreaHit { .. } => 0,
         _ => 10,
     }
 }
 
 pub fn get_active(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Bolt { .. } => 0,
         _ => 1,
     }
 }
 
 pub fn get_recovery(attack_type: AttackType) -> u32 {
     match attack_type {
-        AttackType::Area => 1,
-        AttackType::Ranged { .. } => 1,
-        AttackType::Bolt { .. } => 10,
         _ => 10,
     }
-}
-
-pub fn get_startup_action(attack_type: AttackType, index: usize) -> crate::NextIntent {
-    match STARTUP_ACTIONS.get(&attack_type) {
-        Some(action_list) => action_list[index % action_list.len()].clone(),
-        None => crate::NextIntent::None,
-    }
-}
-
-pub fn get_recovery_action(attack_type: AttackType, index: usize) -> crate::NextIntent {
-    match RECOVERY_ACTIONS.get(&attack_type) {
-        Some(action_list) => action_list[index % action_list.len()].clone(),
-        None => crate::NextIntent::None,
-    }
-}
-
-fn startup_actions() -> HashMap<AttackType, Vec<crate::NextIntent>> {
-    let mut action_map = HashMap::new();
-
-    action_map.insert(
-        AttackType::Area,
-        vec![crate::NextIntent::PartMove {
-            intent: crate::PartMoveIntent {
-                part_delta: vec![rltk::Point::new(-1, 1), rltk::Point::new(1, -1)],
-            },
-        }],
-    );
-
-    action_map
-}
-
-fn recovery_actions() -> HashMap<AttackType, Vec<crate::NextIntent>> {
-    let mut action_map = HashMap::new();
-
-    action_map.insert(
-        AttackType::Area,
-        vec![crate::NextIntent::PartMove {
-            intent: crate::PartMoveIntent {
-                part_delta: vec![rltk::Point::new(1, -1), rltk::Point::new(-1, 1)],
-            },
-        }],
-    );
-
-    action_map
 }
 
 use AttackTrait::*;
 pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
     match attack_type {
-        AttackType::Area => vec![Damage { amount: 2 }],
         AttackType::Melee => vec![Damage { amount: 1 }],
-        AttackType::Stun => vec![Stun { duration: 10 }],
-        AttackType::Push => vec![Knockback { amount: 2 }],
-        AttackType::Dodge => vec![
+        AttackType::Melee2 => vec![Damage { amount: 2 }],
+        AttackType::MeleeKnockback => vec![Damage { amount: 1 }, Knockback { amount: 2 }],
+        AttackType::MeleeStun => vec![Stun { duration: 10 }],
+        AttackType::MeleeArea { .. } => vec![Damage { amount: 2 }],
+        AttackType::Projectile { .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::Melee,
+        }],
+        AttackType::ProjectileKnockback { .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::MeleeKnockback,
+        }],
+        AttackType::ProjectileStun { .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::MeleeStun,
+        }],
+        AttackType::ProjectileArea { explosion_size, .. } => vec![FollowsPath {
+            step_delay: 3,
+            on_hit: AttackType::OnProjectileAreaHit {
+                radius: explosion_size,
+            },
+        }],
+        AttackType::OnProjectileAreaHit { .. } => vec![Damage { amount: 2 }],
+        AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
+        AttackType::RangedStun { .. } => vec![Damage { amount: 1 }, Stun { duration: 10 }],
+        AttackType::RangedArea { .. } => vec![Damage { amount: 1 }],
+        AttackType::AdvancingKnockback { .. } => vec![
+            Damage { amount: 1 },
+            Knockback { amount: 2 },
+            Movement { delay: 1 },
+        ],
+        AttackType::AdvancingFlip { .. } => vec![
+            Damage { amount: 1 },
+            Pull {
+                amount: 2,
+                pass_over: true,
+            },
+            Movement { delay: 1 },
+        ],
+        AttackType::Barrier => vec![CreatesWalls],
+        AttackType::Hook { radius } => vec![
+            Damage { amount: 1 },
+            Pull {
+                amount: radius - 1,
+                pass_over: false,
+            },
+        ],
+        AttackType::Dodge { .. } => vec![
             Movement { delay: 0 },
             Invulnerable { duration: 6 },
             NeedsStamina {
@@ -216,27 +217,5 @@ pub fn get_attack_traits(attack_type: AttackType) -> Vec<AttackTrait> {
             },
         ], // 24 / 4 = 6 ticks
         AttackType::Recover => vec![Heal { amount: 2 }],
-        AttackType::Haymaker => vec![Damage { amount: 1 }, Knockback { amount: 2 } ],
-        AttackType::Ranged { .. } => vec![Damage { amount: 1 }],
-        AttackType::Bolt { .. } => vec![FollowsPath {
-            step_delay: 3,
-            on_hit: AttackType::Area,
-        }],
-        AttackType::LanceDraw => vec![Damage { amount: 1 }, Stun { duration: 3 }],
-        AttackType::LanceThrust { level, .. } => vec![Damage {
-            amount: level as i32,
-        }],
-        AttackType::LanceCharge { dir } => vec![LanceCharge { dir }],
-        AttackType::Line { .. } => vec![FollowsPath {
-            step_delay: 3,
-            on_hit: AttackType::Stun,
-        }],
-        AttackType::Advancing => vec![
-            Damage { amount: 1 },
-            Pull { amount: 2, pass_over: true },
-            Movement { delay: 1 },
-        ],
-        AttackType::Barrier => vec![CreatesWalls],
-        AttackType::Hook { radius } => vec![Damage { amount: 1 }, Pull { amount: radius - 1, pass_over: false }]
     }
 }
