@@ -176,10 +176,14 @@ fn spawn_items(ecs: &mut World, areas: &mut Vec<usize>, difficulty: i32) {
                 _ => unreachable!(),
             };
 
-            let array_index = rng.range(0, areas.len());
-            let map_idx = areas[array_index];
-            spawn_points.insert(map_idx, item_name.to_string());
-            areas.remove(array_index);
+            if areas.is_empty() {
+                println!("we shouldn't be calling spawn region for here");
+            } else {
+                let array_index = rng.range(0, areas.len());
+                let map_idx = areas[array_index];
+                spawn_points.insert(map_idx, item_name.to_string());
+                areas.remove(array_index);
+            }
         }
     }
 
