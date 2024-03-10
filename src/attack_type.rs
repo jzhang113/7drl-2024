@@ -129,7 +129,7 @@ pub fn get_attack_shape(attack_type: AttackType) -> RangeType {
     match attack_type {
         AttackType::MeleeArea { radius } => RangeType::Square { size: radius },
         AttackType::OnProjectileAreaHit { radius } => RangeType::SquareInclusive { size: radius },
-        AttackType::RangedArea { explosion_size, .. } => RangeType::Square {
+        AttackType::RangedArea { explosion_size, .. } => RangeType::SquareInclusive {
             size: explosion_size,
         },
         AttackType::Barrier => RangeType::Ring { size: 3 },

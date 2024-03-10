@@ -4,7 +4,7 @@ pub const MAP_SCREEN_Y: i32 = 1;
 
 pub const SIDE_X: i32 = 0;
 pub const SIDE_Y: i32 = 0;
-pub const SIDE_W: i32 = 16;
+pub const SIDE_W: i32 = 17;
 pub const SIDE_H: i32 = 50;
 
 pub const CONSOLE_WIDTH: i32 = crate::camera::VIEW_W + SIDE_W + 2;

@@ -113,8 +113,8 @@ impl BuilderChain {
     pub fn spawn_overworld(&mut self, ecs: &mut World) {
         crate::spawn::spawner::build_npc_blacksmith(ecs, rltk::Point::new(13, 5));
         crate::spawn::spawner::build_npc_shopkeeper(ecs, rltk::Point::new(5, 5));
-        crate::spawn::spawner::build_npc_handler(ecs, rltk::Point::new(13, 13));
-        crate::spawn::traps::build_arrow_trap(ecs, rltk::Point::new(8, 8));
+        crate::spawn::spawner::build_npc_handler(ecs, rltk::Point::new(9, 3));
+        // crate::spawn::traps::build_arrow_trap(ecs, rltk::Point::new(8, 8));
     }
 }
 
@@ -146,13 +146,16 @@ pub fn with_builder(args: &MapBuilderArgs) -> BuilderChain {
     let mut builder = BuilderChain::new(args, &mut rng);
 
     get_builder(&mut builder, args.builder_type, &mut rng);
-    builder.with(noise_region::NoiseRegion::new());
-    builder.with(lake_spawner::LakeSpawner::new());
-    builder.with(lake_spawner::LakeEroder::new());
-    builder.with(map_culler::MapCuller::new());
 
-    // refresh noise regions for spawn placements
-    builder.with(noise_region::NoiseRegion::new());
+    if args.builder_type != 99 {
+        builder.with(noise_region::NoiseRegion::new());
+        builder.with(lake_spawner::LakeSpawner::new());
+        builder.with(lake_spawner::LakeEroder::new());
+        builder.with(map_culler::MapCuller::new());
+
+        // refresh noise regions for spawn placements
+        builder.with(noise_region::NoiseRegion::new());
+    }
 
     builder
 }

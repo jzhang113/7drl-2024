@@ -44,13 +44,6 @@ impl OverworldBuilder {
             build_data.map.tiles[exit_index] = TileType::Floor;
         }
 
-        for x in 13..=14 {
-            for y in 7..=10 {
-                let index = build_data.map.get_index(x, y);
-                build_data.map.tiles[index] = TileType::Water;
-            }
-        }
-
         build_data.take_snapshot();
     }
 }

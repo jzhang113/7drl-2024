@@ -66,16 +66,16 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 } else if let Some(npc) = npcs.get(*dest_ent) {
                     match npc.npc_type {
                         NpcType::Blacksmith => {
-                            log.add("Upgrade your equipment here");
-                            return RunState::Blacksmith;
+                            log.add("Good luck in the arena!");
+                            return RunState::AwaitingInput;
                         }
                         NpcType::Handler => {
-                            log.add("Hey there");
+                            log.add("Watch out, attacks have a recovery time that can leave you exposed");
                             return RunState::AwaitingInput;
                         }
                         NpcType::Shopkeeper => {
-                            log.add("Buy useful items here");
-                            return RunState::Shop;
+                            log.add("Most attacks have a windup and can be interrupted by the right attack");
+                            return RunState::AwaitingInput;
                         }
                     }
                 } else {
