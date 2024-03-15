@@ -410,7 +410,7 @@ fn handle_keys(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 let next_state = try_move_player(&mut gs.ecs, 0, 1);
                 next_state
             }
-            VirtualKeyCode::Period => RunState::Running,
+            VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => RunState::Running,
             // VirtualKeyCode::P => {
             //     gs.spawn_exit();
             //     RunState::AwaitingInput
@@ -565,7 +565,9 @@ pub fn ranged_target(
     match ctx.key {
         None => {}
         Some(key) => match key {
-            VirtualKeyCode::Escape => return (SelectionResult::Canceled, None),
+            VirtualKeyCode::Escape | VirtualKeyCode::Back | VirtualKeyCode::Q => {
+                return (SelectionResult::Canceled, None)
+            }
             VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
                 if valid_target {
                     return (
@@ -643,7 +645,9 @@ pub fn view_input(gs: &mut State, ctx: &mut Rltk, index: u32) -> RunState {
     match ctx.key {
         None => {}
         Some(key) => match key {
-            VirtualKeyCode::Escape => return RunState::AwaitingInput,
+            VirtualKeyCode::Escape | VirtualKeyCode::Back | VirtualKeyCode::Q => {
+                return RunState::AwaitingInput
+            }
             VirtualKeyCode::Up | VirtualKeyCode::Numpad8 | VirtualKeyCode::K => {
                 if new_index > 0 {
                     new_index -= 1;
@@ -667,6 +671,10 @@ pub fn ability_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> Run
     let mut new_index = index;
     let max_index = gs.player_abilities.len();
 
+    if ctx.shift && matches!(ctx.key, Some(key) if key == VirtualKeyCode::Q) {
+        return RunState::AwaitingInput;
+    }
+
     match ctx.key {
         None => {}
         Some(key) => match key {
@@ -680,7 +688,7 @@ pub fn ability_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> Run
             VirtualKeyCode::Down | VirtualKeyCode::Numpad2 => {
                 new_index += 1;
             }
-            VirtualKeyCode::Escape => {
+            VirtualKeyCode::Escape | VirtualKeyCode::Back => {
                 return RunState::AwaitingInput;
             }
             VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
@@ -704,6 +712,10 @@ pub fn inventory_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> R
     let mut new_index = index;
     let max_index = gs.player_inventory.consumables.len();
 
+    if ctx.shift && matches!(ctx.key, Some(key) if key == VirtualKeyCode::Q) {
+        return RunState::AwaitingInput;
+    }
+
     match ctx.key {
         None => {}
         Some(key) => match key {
@@ -717,10 +729,9 @@ pub fn inventory_select_input(gs: &mut State, ctx: &mut Rltk, index: usize) -> R
             VirtualKeyCode::Down | VirtualKeyCode::Numpad2 => {
                 new_index += 1;
             }
-            VirtualKeyCode::Escape => {
+            VirtualKeyCode::Escape | VirtualKeyCode::Back => {
                 return RunState::AwaitingInput;
             }
-
             VirtualKeyCode::Space | VirtualKeyCode::Return | VirtualKeyCode::NumpadEnter => {
                 todo!();
             }

@@ -1,5 +1,4 @@
 use crate::*;
-use specs::prelude::*;
 
 pub enum SpawnType {
     Wall,

@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate lazy_static;
 
+rltk::add_wasm_support!();
+
 rltk::embedded_resource!(FONT, "../resources/Zilk-16x16.png");
 rltk::embedded_resource!(ICONS, "../resources/custom_icons.png");
 
@@ -86,8 +88,6 @@ pub enum RunState {
     ChangeMap {
         level: u32,
     },
-    Shop,
-    Blacksmith,
     Dead {
         success: bool,
     },
@@ -511,7 +511,6 @@ impl GameState for State {
             }
             RunState::Running => {
                 self.run_systems();
-                std::thread::sleep(std::time::Duration::from_millis(1));
                 next_status = *self.ecs.fetch::<RunState>();
             }
             RunState::HitPause { remaining_time } => {
@@ -559,28 +558,6 @@ impl GameState for State {
                     }
                 }
             }
-            RunState::Shop => {
-                gui::overworld::draw_shop(ctx);
-                match ctx.key {
-                    None => {}
-                    Some(key) => {
-                        if key == rltk::VirtualKeyCode::Escape {
-                            next_status = RunState::Running;
-                        }
-                    }
-                }
-            }
-            RunState::Blacksmith => {
-                gui::overworld::draw_upgrades(ctx);
-                match ctx.key {
-                    None => {}
-                    Some(key) => {
-                        if key == rltk::VirtualKeyCode::Escape {
-                            next_status = RunState::Running;
-                        }
-                    }
-                }
-            }
             RunState::AbilitySelect { index } => {
                 if self.player_abilities.is_empty() {
                     let mut log = self.ecs.fetch_mut::<GameLog>();
@@ -614,7 +591,10 @@ impl GameState for State {
                 match ctx.key {
                     None => {}
                     Some(key) => {
-                        if key == rltk::VirtualKeyCode::Escape {
+                        if key == rltk::VirtualKeyCode::Escape
+                            || key == rltk::VirtualKeyCode::Back
+                            || key == rltk::VirtualKeyCode::Q
+                        {
                             next_status = RunState::AwaitingInput;
                         }
                     }

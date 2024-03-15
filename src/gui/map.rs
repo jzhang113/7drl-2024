@@ -1,6 +1,5 @@
 use super::consts::*;
 use crate::*;
-use rltk::Algorithm2D;
 
 pub fn draw_all(ecs: &World, ctx: &mut Rltk) {
     // map elements

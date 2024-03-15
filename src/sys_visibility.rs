@@ -1,6 +1,5 @@
 use crate::*;
-use rltk::{Algorithm2D, Point};
-use specs::prelude::*;
+use rltk::Point;
 
 pub struct VisibilitySystem;
 

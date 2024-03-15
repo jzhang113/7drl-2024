@@ -1,6 +1,5 @@
 use super::consts::*;
 use crate::*;
-use rltk::Algorithm2D;
 use std::collections::HashSet;
 
 // TODO

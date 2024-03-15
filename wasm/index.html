@@ -1,0 +1,15 @@
+<html>
+  <head>
+    <meta content="text/html;chaset=utf-8" http-equiv="Content-Type" />
+  </head>
+
+  <body style="background-color:black">
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script src="./myblob.js"></script>
+    <script>
+      window.addEventListener("load", async () => {
+        await wasm_bindgen("./myblob_bg.wasm");
+      })
+    </script>
+  </body>
+</html>
