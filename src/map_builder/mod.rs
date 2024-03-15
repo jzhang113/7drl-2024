@@ -21,6 +21,7 @@ pub struct BuilderMap {
     pub starting_position: Position,
     pub noise_areas: HashMap<i32, Vec<usize>>,
     pub rooms: Option<Vec<rltk::Rect>>,
+    pub corridors: Option<Vec<Vec<usize>>>,
 }
 
 impl BuilderMap {
@@ -69,6 +70,7 @@ impl BuilderChain {
                 history: Vec::new(),
                 noise_areas: HashMap::new(),
                 rooms: None,
+                corridors: None,
             },
         }
     }

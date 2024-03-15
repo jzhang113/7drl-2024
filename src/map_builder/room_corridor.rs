@@ -15,9 +15,15 @@ impl NearestCorridor {
         Box::new(Self)
     }
 
-    fn build_corridor(&self, build_data: &mut BuilderMap, src: rltk::Point, dest: rltk::Point) {
+    fn build_corridor(
+        &self,
+        build_data: &mut BuilderMap,
+        src: rltk::Point,
+        dest: rltk::Point,
+    ) -> Vec<usize> {
         let mut x = src.x;
         let mut y = src.y;
+        let mut tiles = Vec::new();
 
         while x != dest.x || y != dest.y {
             if x < dest.x {
@@ -33,7 +39,10 @@ impl NearestCorridor {
             let index = build_data.map.get_index(x, y);
             build_data.map.tiles[index] = crate::TileType::Floor;
             build_data.map.color_map[index] = crate::map_floor_color();
+            tiles.push(index);
         }
+
+        tiles
     }
 
     fn build(&mut self, build_data: &mut BuilderMap, rng: &mut rltk::RandomNumberGenerator) {
@@ -63,13 +72,13 @@ impl NearestCorridor {
             if !room_distance.is_empty() {
                 room_distance.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
                 let dest_center = rooms[room_distance[0].0].center();
-                self.build_corridor(build_data, room_center, dest_center);
+                let corridor = self.build_corridor(build_data, room_center, dest_center);
 
                 connected.insert(i);
-                // corridors.push(corridor)
+                corridors.push(corridor);
             }
         }
 
-        // build_data.corridors = Some(corridors);
+        build_data.corridors = Some(corridors);
     }
 }
