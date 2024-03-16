@@ -171,14 +171,7 @@ impl State {
         let mut rng = rltk::RandomNumberGenerator::new();
 
         // Add a dummy map and player to the ecs
-        let map = Map::new(
-            1,
-            1,
-            0,
-            &"Dummy".to_string(),
-            &"#FFFFFF".to_string(),
-            &mut rng,
-        );
+        let map = Map::new(1, 1, 0, "Dummy", "#FFFFFF", &mut rng);
         self.ecs.insert(map);
 
         let player = spawn::spawner::build_player(&mut self.ecs, rltk::Point::new(0, 0));

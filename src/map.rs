@@ -1,5 +1,6 @@
 use rltk::{Algorithm2D, BaseMap, Point, Rect};
 use specs::Entity;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -86,8 +87,8 @@ impl Map {
         width: i32,
         height: i32,
         level: u32,
-        name: &String,
-        map_color: &String,
+        name: &str,
+        map_color: &str,
         rng: &mut rltk::RandomNumberGenerator,
     ) -> Self {
         let dim = (width * height).try_into().unwrap();
@@ -106,13 +107,13 @@ impl Map {
             width,
             height,
             level,
-            name: name.clone(),
+            name: name.to_string(),
             camera: crate::Camera {
                 origin: rltk::Point::zero(),
                 map_width: width,
                 map_height: height,
             },
-            color_map: color_map,
+            color_map,
             item_map: HashMap::new(),
             creature_map: HashMap::new(),
             known_tiles: vec![false; dim],
@@ -142,7 +143,7 @@ impl Map {
     }
 
     pub fn is_tile_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if x < 0 || x > self.width - 1 || y < 0 || y > self.height - 1 {
             return false;
         }
 
@@ -172,7 +173,7 @@ impl Map {
     }
 
     pub fn is_tile_occupied(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if x < 0 || x > self.width - 1 || y < 0 || y > self.height - 1 {
             return false;
         }
 
@@ -190,7 +191,7 @@ impl Map {
     }
 
     pub fn is_tile_water(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+        if x < 0 || x > self.width - 1 || y < 0 || y > self.height - 1 {
             return false;
         }
 
@@ -251,11 +252,11 @@ impl Map {
     }
 
     pub fn track_item(&mut self, data: Entity, index: usize) -> bool {
-        if self.item_map.get(&index).is_some() {
-            false
-        } else {
-            self.item_map.insert(index, data);
+        if let Entry::Vacant(e) = self.item_map.entry(index) {
+            e.insert(data);
             true
+        } else {
+            false
         }
     }
 
@@ -293,17 +294,17 @@ impl Map {
         index: usize,
         multi_component: Option<&crate::MultiTile>,
     ) -> bool {
-        if self.creature_map.get(&index).is_some() {
-            false
-        } else {
+        if let Entry::Vacant(e) = self.creature_map.entry(index) {
+            e.insert(data);
             self.blocked_tiles[index] = true;
-            self.creature_map.insert(index, data);
 
             if let Some(multi_component) = multi_component {
-                self.update_multi_component(data, &multi_component, index, true);
+                self.update_multi_component(data, multi_component, index, true);
             }
 
             true
+        } else {
+            false
         }
     }
 
@@ -317,7 +318,7 @@ impl Map {
 
         if let Some(entity) = entity {
             if let Some(multi_component) = multi_component {
-                self.update_multi_component(entity, &multi_component, index, false);
+                self.update_multi_component(entity, multi_component, index, false);
             }
         }
 

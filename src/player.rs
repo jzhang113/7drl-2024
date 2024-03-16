@@ -8,7 +8,6 @@ pub const SUPLEX_STAM_REQ: i32 = 2;
 pub const BOLT_STAM_REQ: i32 = 2;
 
 fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
-    use std::cmp::{max, min};
     let mut positions = ecs.write_storage::<Position>();
     let players = ecs.read_storage::<Player>();
     let mut movements = ecs.write_storage::<MoveIntent>();
@@ -22,9 +21,14 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
     let mut log = ecs.fetch_mut::<gamelog::GameLog>();
 
     for (_player, pos) in (&players, &mut positions).join() {
-        let new_x = min(map.width, max(0, pos.x + dx));
-        let new_y = min(map.height, max(0, pos.y + dy));
+        let new_x = pos.x + dx;
+        let new_y = pos.y + dy;
         let dest_index = map.get_index(new_x, new_y);
+
+        if !map.in_bounds(Point::new(new_x, new_y)) {
+            log.add("You bump into the edge of the world");
+            return RunState::AwaitingInput;
+        }
 
         match map.tiles[dest_index] {
             TileType::DownStairs => {
@@ -33,14 +37,13 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
                 }
             }
             TileType::NewLevel => return RunState::GenerateLevel,
+            TileType::ShallowWater => log.late_add("The shallow water slows you down"),
+            TileType::Water => log.add("The water looks too deep to move through"),
+            TileType::Wall => log.add("You bump into a wall"),
             _ => {}
         }
 
         if !map.blocked_tiles[dest_index] {
-            if map.tiles[dest_index] == crate::TileType::ShallowWater {
-                log.late_add("The shallow water slows you down");
-            }
-
             let new_move = MoveIntent {
                 loc: Point::new(new_x, new_y),
                 force_facing: None,
@@ -53,57 +56,55 @@ fn try_move_player(ecs: &mut World, dx: i32, dy: i32) -> RunState {
             return RunState::Running;
         }
 
-        if map.tiles[dest_index] == crate::TileType::Wall {
-            log.add("You bump into a wall");
-        } else if map.tiles[dest_index] == crate::TileType::Water {
-            log.add("The water looks too deep to move through");
-        } else {
-            if let Some(dest_ent) = map.creature_map.get(&dest_index) {
-                if let Some(_) = openables.get(*dest_ent) {
-                    if let Some(health) = healths.get_mut(*dest_ent) {
-                        // will be cleaned up by sys_death
-                        health.current = 0;
-                    }
-
-                    return RunState::Running;
-                } else if let Some(npc) = npcs.get(*dest_ent) {
-                    match npc.npc_type {
-                        NpcType::Blacksmith => {
-                            log.add("Good luck in the arena!");
-                            return RunState::AwaitingInput;
-                        }
-                        NpcType::Handler => {
-                            log.add("Watch out, attacks have a recovery time that can leave you exposed");
-                            return RunState::AwaitingInput;
-                        }
-                        NpcType::Shopkeeper => {
-                            log.add("Most attacks have a windup and can be interrupted by the right attack");
-                            return RunState::AwaitingInput;
-                        }
-                    }
-                } else {
-                    // bump attack
-                    let attack = crate::attack_type::get_attack_intent(
-                        AttackType::MeleeKnockback,
-                        Point::new(new_x, new_y),
-                        None,
-                    );
-                    let frame = crate::attack_type::get_frame_data(AttackType::MeleeKnockback);
-
-                    attacks
-                        .insert(*player, attack)
-                        .expect("Failed to insert new attack from player");
-
-                    frames.insert(*player, frame).ok();
-
-                    return RunState::Running;
-                    // Keep bump attacks?
-                    // return RunState::AwaitingInput;
+        if let Some(dest_ent) = map.creature_map.get(&dest_index) {
+            if let Some(_) = openables.get(*dest_ent) {
+                if let Some(health) = healths.get_mut(*dest_ent) {
+                    // will be cleaned up by sys_death
+                    health.current = 0;
                 }
-            }
 
-            return RunState::AwaitingInput;
+                return RunState::Running;
+            } else if let Some(npc) = npcs.get(*dest_ent) {
+                match npc.npc_type {
+                    NpcType::Blacksmith => {
+                        log.add("Good luck in the arena!");
+                        return RunState::AwaitingInput;
+                    }
+                    NpcType::Handler => {
+                        log.add(
+                            "Watch out, attacks have a recovery time that can leave you exposed",
+                        );
+                        return RunState::AwaitingInput;
+                    }
+                    NpcType::Shopkeeper => {
+                        log.add(
+                            "Most attacks have a windup and can be interrupted by the right attack",
+                        );
+                        return RunState::AwaitingInput;
+                    }
+                }
+            } else {
+                // bump attack
+                let attack = crate::attack_type::get_attack_intent(
+                    AttackType::MeleeKnockback,
+                    Point::new(new_x, new_y),
+                    None,
+                );
+                let frame = crate::attack_type::get_frame_data(AttackType::MeleeKnockback);
+
+                attacks
+                    .insert(*player, attack)
+                    .expect("Failed to insert new attack from player");
+
+                frames.insert(*player, frame).ok();
+
+                return RunState::Running;
+                // Keep bump attacks?
+                // return RunState::AwaitingInput;
+            }
         }
+
+        return RunState::AwaitingInput;
     }
 
     RunState::AwaitingInput
